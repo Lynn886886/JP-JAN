@@ -130,7 +130,7 @@
                             { 
                                 icon: Plane,
                                 title: "第一段：機場 → 三宮", 
-                                desc: "1. 抵達口 (1F) 搭電梯上 2F。\n2. 搭乘 Port Liner (新交通港灣人工島線) 往「三宮」。" 
+                                desc: "1. 抵達口 (1F) 搭電梯上 2F。\n2. 搭乘 Port Liner 往「三宮」。\n💰 票價：340 日圓" 
                             },
                             { 
                                 icon: ArrowRightCircle, 
@@ -140,7 +140,7 @@
                             { 
                                 icon: Train,
                                 title: "第三段：搭乘阪神電車", 
-                                desc: "月台：2 號月台 (往大阪難波/奈良)。\n⚠️ 下車注意：經過難波站「請勿下車」！多搭一站至「近鐵日本橋」下車。" 
+                                desc: "月台：2 號月台 (往大阪難波/奈良)。\n⚠️ 下車注意：經過難波站「請勿下車」！多搭一站至「近鐵日本橋」下車。\n💰 票價：約 630 日圓 (阪神+近鐵)" 
                             },
                             { 
                                 icon: MapPin,
@@ -155,7 +155,7 @@
                     time: "14:30", 
                     title: "午餐：牛かつもと村", 
                     desc: "半熟炸牛排定食，可自己烤。通常需排隊。", 
-                    subDesc: "交通方式：從飯店約步行9分鐘\n地址：Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka\n營業時間：11:00-22:00",
+                    subDesc: "💰 平均預算：約 ¥1,400 ~ ¥2,200\n交通方式：從飯店約步行9分鐘\n地址：Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka\n營業時間：11:00-22:00",
                     tags: ["必吃", "排隊名店"],
                     address: "Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka"
                     },
@@ -177,7 +177,7 @@
                     time: "19:00", 
                     title: "晚餐：北極星蛋包飯", 
                     desc: "蛋包飯發源地，需脫鞋。", 
-                    subDesc: "交通方式：從飯店步行約12分鐘\n地址：2 Chome-7-27 Nishishinsaibashi, Chuo Ward, Osaka, 542-0086 日本\n營業時間：11:30~21:30",
+                    subDesc: "💰 平均預算：約 ¥1,080 ~ ¥1,600\n交通方式：從飯店步行約12分鐘\n地址：2 Chome-7-27 Nishishinsaibashi, Chuo Ward, Osaka, 542-0086 日本\n營業時間：11:30~21:30",
                     tags: ["必吃", "老店"],
                     address: "2 Chome-7-27 Nishishinsaibashi, Chuo Ward, Osaka" 
                     }
@@ -198,7 +198,7 @@
                     time: "19:00", 
                     title: "晚餐：燒肉力丸", 
                     desc: "難波道頓堀店，需預訂。", 
-                    subDesc: "交通方式：與飯店距離約7分鐘\n地址：日本〒542-0071 Osaka, Chuo Ward, Dotonbori, 1 Chome-9-1 5F\n營業時間：11:30~01:30",
+                    subDesc: "💰 平均預算：吃到飽方案約 ¥3,498 ~ ¥5,808\n交通方式：與飯店距離約7分鐘\n地址：日本〒542-0071 Osaka, Chuo Ward, Dotonbori, 1 Chome-9-1 5F\n營業時間：11:30~01:30",
                     tags: ["預約制", "燒肉"], 
                     address: "1 Chome-9-1 Dotonbori, Osaka" 
                     }
@@ -207,10 +207,60 @@
                 {
                 day: 4,
                 date: "1/14 (三)",
-                location: "和歌山",
+                location: "勝尾寺/金閣寺/嵐山",
                 weather: "晴朗 9°C",
                 events: [
-                    { type: 'spot', time: "全日", title: "和歌山行程", desc: "行程尚未詳細安排，建議前往黑潮市場或搭乘貓咪電車。", tags: ["自由行"] }
+                    { 
+                        type: 'transport', 
+                        time: "07:45", 
+                        title: "KKday 集合", 
+                        desc: "日本橋(大阪)近鐵日本橋2號出口集合\n（7:45~8:00集合，逾時不候）", 
+                        subDesc: "地址：1 Chome-3-3番11 Nipponbashi, Chuo Ward, Osaka",
+                        address: "近鐵日本橋車站" 
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "10:00", 
+                        title: "勝尾寺 (Katsuo-ji)", 
+                        desc: "祈求勝運的靈驗寺廟，滿山滿谷的達摩不倒翁是最大特色。", 
+                        subDesc: "停留時間：約 70 分鐘\n門票：成人 500 日圓",
+                        tags: ["必勝祈願", "達摩"],
+                        address: "Katsuo-ji" 
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "12:45", 
+                        title: "嵐山散策 & 午餐", 
+                        desc: "漫步竹林小徑、渡月橋、和服森林。", 
+                        subDesc: "停留時間：約 150 分鐘\n午餐：自費體驗京都傳統料理 (推薦：湯豆腐、蕎麥麵)",
+                        tags: ["世界遺產", "竹林"],
+                        address: "Arashiyama Bamboo Grove" 
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "16:15", 
+                        title: "金閣寺 (Kinkaku-ji)", 
+                        desc: "閃耀著金色光輝的舍利殿，京都必訪名勝。", 
+                        subDesc: "停留時間：約 40 分鐘\n門票：成人 500 日圓",
+                        tags: ["世界遺產", "金碧輝煌"],
+                        address: "Kinkaku-ji" 
+                    },
+                    { 
+                        type: 'transport', 
+                        time: "18:30", 
+                        title: "行程結束", 
+                        desc: "返回大阪近鐵日本橋站解散", 
+                        address: "近鐵日本橋車站" 
+                    },
+                    { 
+                        type: 'food', 
+                        time: "19:00", 
+                        title: "晚餐：福太郎大阪燒 本店", 
+                        desc: "米其林推薦的人氣大阪燒名店，必點蔥花燒(Negiyaki)。", 
+                        subDesc: "💰 平均預算：約 ¥1,000 ~ ¥2,000\n地址：大阪府大阪市中央区千日前2-3-17\n營業時間：平日 17:00-23:30 / 週末假日 12:00-23:30\n特色：現點現做，坐在吧台看師傅料理，口感鬆軟滑嫩。",
+                        tags: ["米其林推薦", "排隊名店"],
+                        address: "2 Chome-3-17 Sennichimae, Chuo Ward, Osaka" 
+                    }
                 ]
                 },
                 {
@@ -225,7 +275,6 @@
                     title: "移動：大阪 → 神戶", 
                     desc: "近鐵日本橋搭「快速急行」往神戶三宮。",
                     isImportant: true,
-                    // 🔥 交通攻略
                     detailedGuide: {
                         strategy: "最省力！近鐵/阪神直通運轉 (免轉乘)",
                         steps: [
@@ -258,7 +307,7 @@
                     time: "12:00", 
                     title: "午餐：Kobe Beef Steak Sakura", 
                     desc: "神戶牛排體驗",
-                    subDesc: "交通方式：從蒙特利酒店約步行2分鐘\n地址：日本〒650-0011 Hyogo, Kobe, Chuo Ward, Shimoyamatedori, 2 Chome-17-10 2F\n營業時間：11:30-14:00; 17:00-21:00", 
+                    subDesc: "💰 平均預算：午餐套餐約 ¥6,000 ~ ¥8,000 (依部位而定)\n交通方式：從蒙特利酒店約步行2分鐘\n地址：日本〒650-0011 Hyogo, Kobe, Chuo Ward, Shimoyamatedori, 2 Chome-17-10 2F\n營業時間：11:30-14:00; 17:00-21:00", 
                     tags: ["必吃", "神戶牛"],
                     address: "2 Chome-17-10 Shimoyamatedori, Kobe" 
                     },
@@ -313,13 +362,12 @@
                             ]
                         }
                     },
-                    // 🔥 新增：晚餐-商場覓食 (1/15)
                     { 
                         type: 'food', 
                         time: "18:30", 
                         title: "晚餐：商場覓食 (Mosaic / Umie)", 
                         desc: "結束遊船後，直接在 Mosaic 馬賽克廣場或 Umie 購物中心享用晚餐。", 
-                        subDesc: "地點：Mosaic 廣場 2F/3F 或 Umie 南館/北館\n推薦：可選擇面對港灣景觀的餐廳，延續遊船的浪漫氛圍。",
+                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥3,000\n地點：Mosaic 廣場 2F/3F 或 Umie 南館/北館\n推薦：可選擇面對港灣景觀的餐廳，延續遊船的浪漫氛圍。",
                         tags: ["自由食", "景觀餐廳"],
                         address: "Kobe Harborland umie Mosaic" 
                     },
@@ -328,7 +376,11 @@
                         time: "19:00", 
                         title: "神戶港塔", 
                         desc: "欣賞神戶千萬夜景",
-                        subDesc: "地址：日本〒650-0042 Hyogo, Kobe, Chuo Ward, Hatobacho, 5-5\n營業時間：09:00-23:00", 
+                        subDesc: "地址：日本〒650-0042 Hyogo, Kobe, Chuo Ward, Hatobacho, 5-5\n營業時間：09:00-23:00 (※最後入場時間為晚上10時半)",
+                        attractions: [
+                            { label: "門票 (展望層+屋頂)", text: "成人 1,200日圓 (高中生及以上)" },
+                            { label: "門票 (僅展望層)", text: "成人 1,000日圓 (高中生及以上)" }
+                        ],
                         address: "Kobe Port Tower" 
                     },
                     { 
@@ -352,7 +404,7 @@
                         time: "09:00", 
                         title: "早餐：Nishimura's Coffee", 
                         desc: "75年歷史德式咖啡廳 (中山手本店)", 
-                        subDesc: "交通方式：從蒙特利酒店步行約 7 分鐘\n地址：1 Chome-26-3 Nakayamatedori, Chuo Ward, Kobe\n營業時間：08:30-23:00",
+                        subDesc: "💰 平均預算：約 ¥1,000 ~ ¥1,500\n交通方式：從蒙特利酒店步行約 7 分鐘\n地址：1 Chome-26-3 Nakayamatedori, Chuo Ward, Kobe\n營業時間：08:30-23:00",
                         tags: ["老派浪漫"],
                         address: "1 Chome-26-3 Nakayamatedori, Kobe" 
                     },
@@ -412,7 +464,7 @@
                         time: "12:30", 
                         title: "午餐：Kobe IJINKAN-YA", 
                         desc: "位於北野區域的洋食餐廳。", 
-                        subDesc: "交通方式：位於異人館街區，步行即可抵達\n地址：日本〒650-0002 Hyogo, Kobe, Chuo Ward, Kitanocho, 3 Chome-4-26\n營業時間：10:00-18:00",
+                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥2,500\n交通方式：位於異人館街區，步行即可抵達\n地址：日本〒650-0002 Hyogo, Kobe, Chuo Ward, Kitanocho, 3 Chome-4-26\n營業時間：10:00-18:00",
                         address: "3 Chome-4-26 Kitanocho, Kobe" 
                     },
                     { 
@@ -438,7 +490,7 @@
                         time: "18:00", 
                         title: "晚餐：Kobesteak Propeller", 
                         desc: "提供高品質神戶牛排與洋食，CP值極高的人氣名店。需預訂。", 
-                        subDesc: "交通方式：由阪急步行約3分鐘\n地址：8 Chome-1-14 Isogamidori, Chuo Ward, Kobe\n營業時間：11:00-14:30, 17:00-21:00",
+                        subDesc: "💰 平均預算：約 ¥5,000 ~ ¥6,000\n交通方式：由阪急步行約3分鐘\n地址：8 Chome-1-14 Isogamidori, Chuo Ward, Kobe\n營業時間：11:00-14:30, 17:00-21:00",
                         tags: ["預約制", "神戶牛", "人氣店"],
                         address: "8 Chome-1-14 Isogamidori, Kobe" 
                     }
@@ -464,7 +516,7 @@
                         time: "10:30", 
                         title: "早午餐：BRISK STAND", 
                         desc: "IG爆紅的「切對半漢堡」，肉汁飽滿，視覺味覺雙重享受。", 
-                        subDesc: "交通方式：從生田神社步行約 13 分鐘\n地址：5 Chome-4-8 Motomachidori, Kobe\n營業時間：平日 10:30~16:30 / 週末 10:30~18:30",
+                        subDesc: "💰 平均預算：約 ¥1,650 ~ ¥2,500\n交通方式：從生田神社步行約 13 分鐘\n地址：5 Chome-4-8 Motomachidori, Kobe\n營業時間：平日 10:30~16:30 / 週末 10:30~18:30",
                         tags: ["IG熱門", "漢堡名店"],
                         address: "5 Chome-4-8 Motomachidori, Kobe" 
                     },
@@ -496,7 +548,7 @@
                         time: "18:00", 
                         title: "晚餐：Unagi Kikugawa (一本鰻)", 
                         desc: "來自名古屋的90年老店，現殺現烤，必吃「一本鰻」。", 
-                        subDesc: "地址：4 Chome-8-17 Kanocho, Chuo Ward, Kobe\n營業時間：12:00-15:00, 17:00-22:00",
+                        subDesc: "💰 平均預算：約 ¥6,000 ~ ¥8,000\n地址：4 Chome-8-17 Kanocho, Chuo Ward, Kobe\n營業時間：12:00-15:00, 17:00-22:00",
                         tags: ["米其林推薦", "鰻魚飯"],
                         address: "4 Chome-8-17 Kanocho, Kobe" 
                     }
