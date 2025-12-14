@@ -63,31 +63,49 @@
             CreditCard, Plane, BedDouble, ChevronDown, ChevronUp, 
             Info, ShoppingBag, Plus, Trash2, Wallet, Coffee, ExternalLink, 
             FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
-            Camera, Ticket, Ship, Car, Landmark, Bus
+            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
         // --- 4. 行程資料 (Trip Data) ---
         const TRIP_DATA = {
             flights: {
-                outbound: { date: "1/11", from: "台中 RMQ T2", time: "09:00", to: "神戶 UKB T2", arrival: "12:30" },
-                inbound: { date: "1/18", from: "神戶 UKB 神戶機場 T2", time: "13:30", to: "台中 RMQ 清泉崗機場 T2", arrival: "16:00" }
+                outbound: { 
+                    date: "1/11", 
+                    from: "台中 RMQ T2", 
+                    time: "09:00", 
+                    to: "神戶 UKB T2", 
+                    arrival: "12:30",
+                    // 您可以在這裡加入航空公司圖片網址，若無則留空
+                    // image: "https://example.com/airline-logo.jpg" 
+                },
+                inbound: { 
+                    date: "1/18", 
+                    from: "神戶 UKB 神戶機場 T2", 
+                    time: "13:30", 
+                    to: "台中 RMQ 清泉崗機場 T2", 
+                    arrival: "16:00" 
+                }
             },
             hotels: [
                 {
-                period: "1/11 - 1/15",
-                name: "大阪難波相鐵 GRAND FRESA",
-                address: "1 Chome-1-13 Nipponbashi, Chuo Ward, Osaka",
-                checkIn: "15:00",
-                checkOut: "11:00",
-                note: "近鐵日本橋站 Exit 10 (有電梯) / 飯店位於全家便利商店旁"
+                    period: "1/11 - 1/15",
+                    name: "大阪難波相鐵 GRAND FRESA",
+                    address: "1 Chome-1-13 Nipponbashi, Chuo Ward, Osaka",
+                    checkIn: "15:00",
+                    checkOut: "11:00",
+                    note: "近鐵日本橋站 Exit 10 (有電梯) / 飯店位於全家便利商店旁",
+                    // 🔥 替換這裡的網址為您的飯店照片 🔥
+                    image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800" 
                 },
                 {
-                period: "1/15 - 1/18",
-                name: "神戶蒙特利酒店 Hotel Monterey Kobe",
-                address: "2 Chome-11-13 Shimoyamatedori, Kobe",
-                checkIn: "15:00",
-                checkOut: "11:00",
-                note: "歐式中世紀風格建築 / 生田神社附近"
+                    period: "1/15 - 1/18",
+                    name: "神戶蒙特利酒店 Hotel Monterey Kobe",
+                    address: "2 Chome-11-13 Shimoyamatedori, Kobe",
+                    checkIn: "15:00",
+                    checkOut: "11:00",
+                    note: "歐式中世紀風格建築 / 生田神社附近",
+                    // 🔥 替換這裡的網址為您的飯店照片 🔥
+                    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"
                 }
             ],
             itinerary: [
@@ -294,6 +312,16 @@
                                 { icon: Camera, title: "18:15 - 18:30 | 下船", desc: "下船 & 拍攝港灣夜景" }
                             ]
                         }
+                    },
+                    // 🔥 新增：晚餐-商場覓食 (1/15)
+                    { 
+                        type: 'food', 
+                        time: "18:30", 
+                        title: "晚餐：商場覓食 (Mosaic / Umie)", 
+                        desc: "結束遊船後，直接在 Mosaic 馬賽克廣場或 Umie 購物中心享用晚餐。", 
+                        subDesc: "地點：Mosaic 廣場 2F/3F 或 Umie 南館/北館\n推薦：可選擇面對港灣景觀的餐廳，延續遊船的浪漫氛圍。",
+                        tags: ["自由食", "景觀餐廳"],
+                        address: "Kobe Harborland umie Mosaic" 
                     },
                     { 
                         type: 'spot', 
@@ -551,15 +579,23 @@
             );
         };
 
-        const InfoCard = ({ icon: Icon, title, content, subContent }) => (
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4 flex gap-4 items-start">
-                <div className="bg-stone-50 p-3 rounded-xl">
-                <Icon className="text-stone-600" size={24} />
-                </div>
-                <div className="flex-1">
-                <h3 className="text-xs text-stone-400 font-bold uppercase tracking-wider mb-1">{title}</h3>
-                <div className="text-stone-800 font-bold text-lg leading-tight mb-1">{content}</div>
-                {subContent && <div className="text-stone-500 text-sm">{subContent}</div>}
+        const InfoCard = ({ icon: Icon, title, content, subContent, image }) => (
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4 overflow-hidden">
+                {/* 增加圖片顯示區塊 */}
+                {image && (
+                    <div className="h-48 -mx-5 -mt-5 mb-4 overflow-hidden relative">
+                        <img src={image} alt={title} className="w-full h-full object-cover" />
+                    </div>
+                )}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-stone-50 p-3 rounded-xl shrink-0">
+                        <Icon className="text-stone-600" size={24} />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-xs text-stone-400 font-bold uppercase tracking-wider mb-1">{title}</h3>
+                        <div className="text-stone-800 font-bold text-lg leading-tight mb-1">{content}</div>
+                        {subContent && <div className="text-stone-500 text-sm">{subContent}</div>}
+                    </div>
                 </div>
             </div>
         );
@@ -735,12 +771,17 @@
                     {activeTab === 'info' && (
                     <div className="animate-fade-in pt-4 pb-10">
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">航班資訊</h2>
-                        <InfoCard icon={Plane} title="去程航班" content={TRIP_DATA.flights.outbound.time} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} />
+                        <InfoCard icon={Plane} title="去程航班" content={TRIP_DATA.flights.outbound.time} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
                         <InfoCard icon={Plane} title="回程航班" content={TRIP_DATA.flights.inbound.time} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
 
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 mt-8 ml-1">住宿資訊</h2>
                         {TRIP_DATA.hotels.map((hotel, i) => (
-                        <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4">
+                        <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4 overflow-hidden">
+                            {hotel.image && (
+                                <div className="h-48 -mx-5 -mt-5 mb-4 overflow-hidden relative">
+                                    <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
+                                </div>
+                            )}
                             <div className="flex gap-2 items-center mb-2">
                             <div className="bg-indigo-50 text-indigo-600 p-2 rounded-lg"><BedDouble size={20}/></div>
                             <div>
