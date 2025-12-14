@@ -71,9 +71,9 @@
             flights: {
                 outbound: { 
                     date: "1/11", 
-                    from: "台中 RMQ T2", 
+                    from: "台中 RMQ 清泉崗機場 T2", 
                     time: "09:00", 
-                    to: "神戶 UKB T2", 
+                    to: "神戶 UKB 神戶機場 T2", 
                     arrival: "12:30",
                     // 您可以在這裡加入航空公司圖片網址，若無則留空
                     // image: "https://example.com/airline-logo.jpg" 
@@ -423,6 +423,8 @@
                         title: "北野異人館街", 
                         desc: "明治時代留下的外國人住宅區，充滿異國情調。", 
                         address: "Kitano Ijinkan-gai",
+                        // 🔥 註明票價請見資訊欄
+                        subDesc: "※ 詳細票價資訊請參見「資訊」頁面",
                         attractions: [
                             { label: "必去", text: "百年星巴克 (Starbucks Kobe Kitano Ijinkan)\n日本登錄有形文化財，洋式木造建築，必訪打卡點。" },
                             { label: "必買伴手禮", text: "1. 風見雞本舖：烤起司布丁\n2. 六甲牧場：霜淇淋、牛奶冰淇淋、乳酪蛋糕\n3. 神戶 Frantz：魔法之壺布丁\n4. 神戶風月堂：法蘭酥" }
@@ -576,7 +578,10 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                if (input === '1115') {
+                // 轉換全形數字為半形，並去除空白
+                const cleanInput = input.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).trim();
+                
+                if (cleanInput === '1115') {
                     onUnlock();
                 } else {
                     setError(true);
@@ -755,6 +760,7 @@
                         if (event.type === 'shopping') { Icon = ShoppingBag; themeClass = "border-l-4 border-pink-300"; }
                         if (event.type === 'flight') { Icon = Plane; themeClass = "border-l-4 border-sky-300"; }
                         if (event.type === 'hotel') { Icon = BedDouble; themeClass = "border-l-4 border-indigo-300"; }
+                        if (event.type === 'spot') { Icon = Camera; } // 預設景點圖示
                         if (event.icon) { Icon = event.icon; }
 
                         return (
@@ -874,9 +880,79 @@
 
                     {activeTab === 'info' && (
                     <div className="animate-fade-in pt-4 pb-10">
+                        
+                        {/* 北野異人館 票價資訊 */}
+                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">北野異人館 票價資訊</h2>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                            
+                            {/* 套票區 */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-emerald-500 pl-2">超值套票 (Pass)</h4>
+                                <div className="space-y-3">
+                                    <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-emerald-800 text-sm">異人館巡遊尊貴通行證 (7館+展望)</span>
+                                        </div>
+                                        <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館、英國館、洋館長屋、貝恩之家</div>
+                                        <div className="flex gap-4 text-xs font-mono text-stone-800">
+                                            <span>成人 <span className="font-bold">¥3,300</span></span>
+                                            <span>兒童 <span className="font-bold">¥880</span></span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-emerald-800 text-sm">山手4館通行證 (4館+展望)</span>
+                                        </div>
+                                        <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館</div>
+                                        <div className="flex gap-4 text-xs font-mono text-stone-800">
+                                            <span>成人 <span className="font-bold">¥2,200</span></span>
+                                            <span>兒童 <span className="font-bold">¥550</span></span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-emerald-800 text-sm">北野通3館通行證</span>
+                                        </div>
+                                        <div className="text-xs text-stone-600 mb-2">含：英國館、洋館長屋、貝恩之家</div>
+                                        <div className="flex gap-4 text-xs font-mono text-stone-800">
+                                            <span>成人 <span className="font-bold">¥1,540</span></span>
+                                            <span>兒童 <span className="font-bold">¥330</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="border-stone-100" />
+
+                            {/* 單館票價區 */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-stone-400 pl-2">單館票價</h4>
+                                <div className="grid gap-2">
+                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                        <span className="font-medium text-stone-700">魚鱗之家 & 展望台</span>
+                                        <span className="font-mono text-stone-500">成人 ¥1,100 / 兒童 ¥220</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                        <span className="font-medium text-stone-700">英國館</span>
+                                        <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                        <span className="font-medium text-stone-700">錯視藝術領事館</span>
+                                        <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                        <span className="font-medium text-stone-700">其他單館 (洋館長屋等)</span>
+                                        <span className="font-mono text-stone-500">成人 ¥550 / 兒童 ¥110</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">航班資訊</h2>
-                        <InfoCard icon={Plane} title="去程航班" content={TRIP_DATA.flights.outbound.time} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
-                        <InfoCard icon={Plane} title="回程航班" content={TRIP_DATA.flights.inbound.time} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
+                        <InfoCard icon={Plane} title="去程航班" content={`${TRIP_DATA.flights.outbound.time} - ${TRIP_DATA.flights.outbound.arrival}`} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
+                        <InfoCard icon={Plane} title="回程航班" content={`${TRIP_DATA.flights.inbound.time} - ${TRIP_DATA.flights.inbound.arrival}`} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
 
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 mt-8 ml-1">住宿資訊</h2>
                         {TRIP_DATA.hotels.map((hotel, i) => (
