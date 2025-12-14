@@ -576,7 +576,7 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                if (input === '2026') {
+                if (input === '1115') {
                     onUnlock();
                 } else {
                     setError(true);
@@ -824,7 +824,7 @@
             const [expandedDay, setExpandedDay] = useState(1);
 
             useEffect(() => {
-                const unlocked = localStorage.getItem('trip_unlocked');
+                const unlocked = localStorage.getItem('trip_unlocked_1115');
                 if (unlocked === 'true') {
                     setIsAuthenticated(true);
                 }
@@ -832,7 +832,7 @@
 
             const handleUnlock = () => {
                 setIsAuthenticated(true);
-                localStorage.setItem('trip_unlocked', 'true');
+                localStorage.setItem('trip_unlocked_1115', 'true');
             };
 
             if (!isAuthenticated) {
