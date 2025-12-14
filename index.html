@@ -63,7 +63,7 @@
             CreditCard, Plane, BedDouble, ChevronDown, ChevronUp, 
             Info, ShoppingBag, Plus, Trash2, Wallet, Coffee, ExternalLink, 
             FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
-            Camera, Ticket, Ship, Car, Landmark, Bus // 新增 Bus icon
+            Camera, Ticket, Ship, Car, Landmark, Bus
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
         // --- 4. 行程資料 (Trip Data) ---
@@ -102,8 +102,35 @@
                     type: 'transport', 
                     time: "13:00", 
                     title: "移動：機場 → 大阪飯店", 
-                    desc: "1. 搭 Port Liner 到三宮。\n2. 轉乘阪神電車 (找MINT百貨B1東出口)。\n3. 搭往「大阪難波/奈良」方向。\n4. 在「近鐵日本橋」下車 (非難波站!)。\n5. 走10號出口 (有電梯)。",
-                    isImportant: true 
+                    desc: "神戶機場搭 Port Liner 轉 阪神電車。\n（詳細轉乘路線請參見下方攻略）",
+                    isImportant: true,
+                    // 🔥 1/11 移動攻略 (新增)
+                    detailedGuide: {
+                        title: "1/11 移動攻略：機場 ➔ 大阪",
+                        strategy: "Port Liner + 阪神電車 (關鍵在三宮轉車)",
+                        steps: [
+                            { 
+                                icon: Plane,
+                                title: "第一段：機場 → 三宮", 
+                                desc: "1. 抵達口 (1F) 搭電梯上 2F。\n2. 搭乘 Port Liner (新交通港灣人工島線) 往「三宮」。" 
+                            },
+                            { 
+                                icon: ArrowRightCircle, 
+                                title: "第二段：三宮轉車 (關鍵！)", 
+                                desc: "Port Liner 出站往右看，找綠色 MINT 百貨。\n✅ 推薦：找入口附近電梯直達 B1，進「阪神電車 東改札口」。" 
+                            },
+                            { 
+                                icon: Train,
+                                title: "第三段：搭乘阪神電車", 
+                                desc: "月台：2 號月台 (往大阪難波/奈良)。\n⚠️ 下車注意：經過難波站「請勿下車」！多搭一站至「近鐵日本橋」下車。" 
+                            },
+                            { 
+                                icon: MapPin,
+                                title: "第四段：日本橋站 → 飯店", 
+                                desc: "走東改札口，找 Exit 10 (有電梯)。\n地面：出電梯過馬路到對面(原6號出口側)，往北 (逆車流) 走，過全家即抵達。" 
+                            }
+                        ]
+                    } 
                     },
                     { 
                     type: 'food', 
@@ -395,7 +422,6 @@
                 location: "神戶",
                 weather: "多雲 6°C",
                 events: [
-                    // 🔥 更新：生田神社
                     { 
                         type: 'spot', 
                         time: "09:00", 
@@ -405,7 +431,6 @@
                         tags: ["戀愛結緣", "能量景點"],
                         address: "1 Chome-2-1 Shimoyamatedori, Chuo Ward, Kobe" 
                     },
-                    // 🔥 更新：BRISK STAND
                     { 
                         type: 'food', 
                         time: "10:30", 
@@ -415,7 +440,6 @@
                         tags: ["IG熱門", "漢堡名店"],
                         address: "5 Chome-4-8 Motomachidori, Kobe" 
                     },
-                    // 🔥 更新：三田 Outlet 交通攻略
                     { 
                         type: 'shopping', 
                         time: "12:00", 
@@ -439,7 +463,6 @@
                             ]
                         }
                     },
-                    // 🔥 更新：晚餐 Unagi Kikugawa
                     { 
                         type: 'food', 
                         time: "18:00", 
