@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 關西新春行</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* 針對手機優化的細節設定 */
+        body { background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 資料結構 ---
+        const TRIP_DATA = {
+            dates: ["1/11", "1/12", "1/13", "1/14", "1/15", "1/16", "1/17", "1/18"],
+            flights: [
+                { type: "去程", date: "1/11 (日)", time: "09:00 - 12:30", route: "台中 RMQ ➝ 神戶 UKB", terminal: "T2 航廈" },
+                { type: "回程", date: "1/18 (日)", time: "13:30 - 16:00", route: "神戶 UKB ➝ 台中 RMQ", terminal: "T2 航廈" }
+            ],
+            hotels: [
+                { name: "大阪難波相鐵 GRAND FRESA", dates: "1/11-1/15", address: "1 Chome-1-13 Nipponbashi, Osaka", note: "近鐵日本橋 10號出口 (有電梯)" },
+                { name: "神戶蒙特利酒店", dates: "1/15-1/18", address: "2 Chome-11-13 Shimoyamatedori, Kobe", note: "歐式建築，近生田神社" }
+            ],
+            itinerary: {
+                "1/11": [
+                    { type: "transport", time: "12:30", title: "抵達神戶機場", desc: "前往三宮轉車。口訣：找 MINT 百貨，下 B1 搭阪神電車。", highlight: "重要：買票搭 Port Liner 到三宮" },
+                    { type: "transport", time: "13:45", title: "移動：三宮 ➝ 近鐵日本橋", desc: "搭乘阪神電車 (往奈良/難波)。", note: "注意：不要在難波下車！多搭一站在「近鐵日本橋」下。" },
+                    { type: "hotel", time: "14:40", title: "飯店 Check-in", desc: "走 10 號出口 (有電梯)，出來過馬路看見全家即抵達。", address: "Sotetsu Grand Fresa Osaka Namba" },
+                    { type: "food", time: "15:30", title: "午餐：牛炸排 本村", desc: "外酥內嫩，可自己烤的半熟炸牛排。", highlight: "必吃：半熟炸牛排定食", address: "Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji" },
+                    { type: "sight", time: "17:00", title: "黑門市場 / 道頓堀", desc: "自由逛街行程。", address: "Dotonbori" }
+                ],
+                "1/12": [
+                    { type: "sight", time: "07:50", title: "琵琶湖一日遊 (KKDay)", desc: "集合地點：近鐵日本橋 2 號出口。", address: "1 Chome-3-6 Nipponbashi" },
+                    { type: "sight", time: "10:20", title: "白鬚神社", desc: "拍攝湖中大鳥居。", highlight: "攻略：藍湖白鬚台展望台視野最好" },
+                    { type: "sight", time: "15:10", title: "La Collina 近江八幡", desc: "童話般的甜點建築。", highlight: "必買：現烤年輪蛋糕" },
+                    { type: "food", time: "19:00", title: "晚餐：北極星蛋包飯", desc: "蛋包飯發源地，需脫鞋。", address: "2 Chome-7-27 Nishishinsaibashi" }
+                ],
+                "1/13": [
+                    { type: "sight", time: "07:10", title: "天橋立 & 美山一日遊", desc: "集合地點：近鐵日本橋 2 號出口。", address: "1 Chome-3-6 Nipponbashi" },
+                    { type: "sight", time: "09:50", title: "伊根舟屋", desc: "日本威尼斯，可自費騎單車。" },
+                    { type: "sight", time: "11:10", title: "天橋立觀景台", desc: "日本三景之一。午餐自理。", highlight: "推薦：智恩寺祈求學業 (適合女兒)" },
+                    { type: "sight", time: "14:40", title: "美山茅屋部落", desc: "京都合掌村，純樸農村景觀。" },
+                    { type: "food", time: "19:00", title: "晚餐：燒肉力丸", desc: "吃到飽燒肉 (需預訂)。", address: "1 Chome-9-1 Dotonbori 5F" }
+                ],
+                "1/14": [
+                    { type: "sight", time: "全日", title: "和歌山自由行", desc: "可安排搭乘小玉電車或參觀和歌山城。", highlight: "建議：查詢黑潮市場鮪魚解體秀時間" }
+                ],
+                "1/15": [
+                    { type: "transport", time: "09:45", title: "移動：大阪 ➝ 神戶", desc: "搭乘「快速急行」直達神戶三宮，免轉車。", note: "警告：絕對不要搭紅色字的「特急」，需補票！" },
+                    { type: "hotel", time: "11:00", title: "寄放行李", desc: "神戶蒙特利酒店，歐式建築風格。", address: "Hotel Monterey Kobe" },
+                    { type: "food", time: "11:30", title: "午餐：Kobe Beef Sakura", desc: "頂級神戶牛鐵板燒。", highlight: "必吃：神戶牛赤身套餐 (A5)", address: "2 Chome-17-10 Shimoyamatedori 2F" },
+                    { type: "sight", time: "14:00", title: "美利堅公園 & 臨海樂園", desc: "BE KOBE 地標、神戶港塔、麵包超人博物館。", highlight: "必買：麵包超人紅豆麵包" },
+                    { type: "sight", time: "16:30", title: "神戶協奏曲號 (Concerto)", desc: "豪華遊船，欣賞夕陽與魔幻時刻。", address: "Kobe Harborland" },
+                    { type: "food", time: "19:00", title: "晚餐：Mosaic 廣場", desc: "建議 Bikkuri Donkey 漢堡排或日式焗烤。", address: "Mosaic Kobe" }
+                ],
+                "1/16": [
+                    { type: "food", time: "08:30", title: "早餐：Nishimura's Coffee", desc: "神戶老牌咖啡店。", address: "1 Chome-26-3 Nakayamatedori" },
+                    { type: "sight", time: "10:00", title: "北野異人館街", desc: "散步上去最順路。參觀風見雞館。", highlight: "拍照：星巴克北野異人館店" },
+                    { type: "food", time: "12:00", title: "午餐：Kobe IJINKAN-YA", desc: "北野異人館附近的洋食。", address: "3 Chome-4-26 Kitanocho" },
+                    { type: "food", time: "18:00", title: "晚餐：Kobesteak Propeller", desc: "當地評價極高的牛排館。", address: "8 Chome-1-14 Isogamidori" }
+                ],
+                "1/17": [
+                    { type: "food", time: "09:00", title: "早餐：BRISK STAND", desc: "人氣漢堡店。", address: "5 Chome-4-8 Motomachidori" },
+                    { type: "sight", time: "10:30", title: "生田神社", desc: "求姻緣與健康的古老神社。" },
+                    { type: "sight", time: "13:00", title: "三田 Premium Outlets", desc: "交通：神姬巴士總站搭乘特急巴士。", highlight: "購物：記得先去 Service Center 拿外國人優惠券" },
+                    { type: "food", time: "19:00", title: "晚餐：一本鰻 (Unagi Kikugawa)", desc: "米其林推薦鰻魚飯。", address: "4 Chome-8-17 Kanocho" }
+                ],
+                "1/18": [
+                    { type: "transport", time: "10:00", title: "前往機場", desc: "搭乘 Port Liner 前往神戶機場。", address: "Kobe Airport" },
+                    { type: "transport", time: "13:30", title: "飛機起飛", desc: "回程：神戶 ➝ 台中", highlight: "提醒：最後採買伴手禮" }
+                ]
+            }
+        };
+
+        // --- 元件: 導航按鈕 ---
+        const NavButton = ({ address, name }) => {
+            const handleNav = () => {
+                const query = encodeURIComponent(`${name} ${address}`);
+                // 自動使用 Google Maps 搜尋
+                window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+            };
+            return (
+                <button onClick={handleNav} className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm">
+                    <span>📍</span> 導航前往
+                </button>
+            );
+        };
+
+        // --- 頁面: 行程 ---
+        const ItineraryView = ({ selectedDay, setSelectedDay }) => {
+            const data = TRIP_DATA.itinerary[selectedDay];
+            const isOsaka = selectedDay.includes("11") || selectedDay.includes("12") || selectedDay.includes("13") || selectedDay.includes("14");
+
+            return (
+                <div className="pb-24">
+                    {/* 日期選擇器 */}
+                    <div className="sticky top-[60px] bg-slate-50 pt-2 pb-4 z-10 overflow-x-auto no-scrollbar flex gap-2 px-4 mb-2">
+                        {TRIP_DATA.dates.map(date => (
+                            <button key={date} onClick={() => setSelectedDay(date)}
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                                    selectedDay === date ? 'bg-indigo-600 text-white shadow-md transform scale-105' : 'bg-white text-gray-500 border border-gray-100'
+                                }`}>
+                                {date}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="px-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-800">當日行程</h2>
+                            <span className="text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
+                                🌤️ {isOsaka ? "大阪" : "神戶"} 6-11°C
+                            </span>
+                        </div>
+
+                        {!data ? <div className="text-center text-gray-400 py-10">本日無特定行程</div> : 
+                        <div className="space-y-4">
+                            {data.map((item, idx) => (
+                                <div key={idx} className="bg-white p-4 rounded-xl card-shadow border border-gray-50 relative overflow-hidden">
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                                        item.type === 'transport' ? 'bg-blue-400' :
+                                        item.type === 'food' ? 'bg-orange-400' :
+                                        item.type === 'hotel' ? 'bg-purple-400' : 'bg-emerald-400'
+                                    }`}></div>
+                                    <div className="pl-3">
+                                        <div className="flex items-center gap-2 text-gray-400 text-xs font-mono mb-1">
+                                            <span>{item.type === 'transport' ? '🚇 交通' : item.type === 'food' ? '🍱 美食' : item.type === 'hotel' ? '🏨 住宿' : '⛩️ 景點'}</span>
+                                            <span>•</span>
+                                            <span>{item.time}</span>
+                                        </div>
+                                        <h3 className="text-lg font-bold text-gray-800 mb-1">{item.title}</h3>
+                                        <p className="text-sm text-gray-600 leading-relaxed">{item.desc}</p>
+                                        
+                                        {item.highlight && (
+                                            <div className="mt-3 bg-yellow-50 p-2 rounded text-xs text-yellow-800 border border-yellow-100 flex gap-2">
+                                                <span>💡</span> {item.highlight}
+                                            </div>
+                                        )}
+                                        {item.note && (
+                                            <div className="mt-3 bg-red-50 p-2 rounded text-xs text-red-700 font-bold border border-red-100 flex gap-2">
+                                                <span>⚠️</span> {item.note}
+                                            </div>
+                                        )}
+                                        {item.address && <NavButton address={item.address} name={item.title} />}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 頁面: 記帳 (Local Storage) ---
+        const BudgetView = () => {
+            const [items, setItems] = useState([]);
+            const [desc, setDesc] = useState('');
+            const [amount, setAmount] = useState('');
+            const [type, setType] = useState('food');
+
+            useEffect(() => {
+                const saved = localStorage.getItem('japan_trip_budget');
+                if (saved) setItems(JSON.parse(saved));
+            }, []);
+
+            const handleAdd = () => {
+                if (!desc || !amount) return;
+                const newItem = { id: Date.now(), desc, amount: parseInt(amount), type };
+                const newItems = [newItem, ...items];
+                setItems(newItems);
+                localStorage.setItem('japan_trip_budget', JSON.stringify(newItems));
+                setDesc('');
+                setAmount('');
+            };
+
+            const handleDelete = (id) => {
+                const newItems = items.filter(i => i.id !== id);
+                setItems(newItems);
+                localStorage.setItem('japan_trip_budget', JSON.stringify(newItems));
+            };
+
+            const total = items.reduce((acc, cur) => acc + cur.amount, 0);
+
+            return (
+                <div className="px-4 pb-24">
+                    <div className="bg-indigo-600 text-white p-6 rounded-2xl shadow-lg mb-6 text-center mt-4">
+                        <div className="text-indigo-200 text-xs mb-1">目前總支出 (JPY)</div>
+                        <div className="text-4xl font-bold">¥{total.toLocaleString()}</div>
+                        <div className="text-indigo-200 text-xs mt-2">約 TWD {(total * 0.22).toFixed(0)}</div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl card-shadow border border-gray-100 mb-6">
+                        <h3 className="font-bold text-gray-700 mb-3 text-sm">新增一筆</h3>
+                        <div className="flex gap-2 mb-3">
+                            <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="項目 (如: 章魚燒)" className="flex-1 bg-slate-50 border-0 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-100" />
+                            <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="日幣" type="number" className="w-20 bg-slate-50 border-0 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-100" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <div className="flex gap-1">
+                                {['food', 'transport', 'shop'].map(t => (
+                                    <button key={t} onClick={() => setType(t)} className={`px-3 py-1 rounded-full text-xs transition-colors ${type === t ? 'bg-indigo-100 text-indigo-700 font-bold' : 'bg-gray-100 text-gray-500'}`}>
+                                        {t === 'food' ? '食' : t === 'transport' ? '行' : '購'}
+                                    </button>
+                                ))}
+                            </div>
+                            <button onClick={handleAdd} className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm active:transform active:scale-95">加入</button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {items.length === 0 && <div className="text-center text-gray-400 text-sm py-4">還沒有記帳紀錄</div>}
+                        {items.map(item => (
+                            <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-50 card-shadow">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                                        item.type === 'food' ? 'bg-orange-100' : 
+                                        item.type === 'transport' ? 'bg-blue-100' : 'bg-pink-100'
+                                    }`}>
+                                        {item.type === 'food' ? '🍱' : item.type === 'transport' ? '🚇' : '🎁'}
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-800 text-sm font-medium">{item.desc}</div>
+                                        <div className="text-gray-400 text-xs">{(item.amount * 0.22).toFixed(0)} TWD</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-gray-800">¥{item.amount}</span>
+                                    <button onClick={() => handleDelete(item.id)} className="text-gray-300 hover:text-red-500">×</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 頁面: 資訊 ---
+        const InfoView = () => (
+            <div className="px-4 pb-24 space-y-6 mt-4">
+                <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">✈️ 航班資訊</h3>
+                    {TRIP_DATA.flights.map((f, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl card-shadow border border-gray-50">
+                            <div className="flex justify-between mb-2">
+                                <span className={`text-xs px-2 py-0.5 rounded font-bold ${i===0 ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>{f.type}</span>
+                                <span className="text-gray-500 text-xs font-mono">{f.date}</span>
+                            </div>
+                            <div className="font-bold text-gray-800 mb-1 text-lg">{f.route}</div>
+                            <div className="text-sm text-gray-600 flex items-center gap-2">
+                                <span>🕒 {f.time}</span>
+                                <span className="text-gray-300">|</span>
+                                <span>{f.terminal}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">🏨 住宿資訊</h3>
+                    {TRIP_DATA.hotels.map((h, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl card-shadow border border-gray-50">
+                            <div className="font-bold text-gray-800 mb-1 text-lg">{h.name}</div>
+                            <div className="text-xs text-gray-500 mb-3 font-mono">{h.dates}</div>
+                            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-2">
+                                <div className="mb-1">📍 {h.address}</div>
+                                <div className="text-gray-400 text-xs mt-2 border-t border-gray-200 pt-2">備註：{h.note}</div>
+                            </div>
+                            <NavButton address={h.address} name={h.name} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+
+        // --- 主程式 ---
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('itinerary');
+            const [selectedDay, setSelectedDay] = useState(TRIP_DATA.dates[0]);
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen bg-slate-50 relative shadow-2xl">
+                    {/* 頂部標題 */}
+                    <div className="bg-white pt-10 pb-2 px-6 sticky top-0 z-20 border-b border-slate-100">
+                        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            🇯🇵 關西新春之旅
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-1">2026/1/11 - 1/18 • 大阪 & 神戶</p>
+                    </div>
+
+                    {/* 內容區 */}
+                    <div className="min-h-screen">
+                        {activeTab === 'itinerary' && <ItineraryView selectedDay={selectedDay} setSelectedDay={setSelectedDay} />}
+                        {activeTab === 'budget' && <BudgetView />}
+                        {activeTab === 'info' && <InfoView />}
+                    </div>
+
+                    {/* 底部導航列 */}
+                    <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center">
+                        <div className="bg-white w-full max-w-md border-t border-slate-200 flex justify-around py-2 pb-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                            <button onClick={() => setActiveTab('itinerary')} className={`flex flex-col items-center gap-1 w-1/3 ${activeTab === 'itinerary' ? 'text-indigo-600' : 'text-gray-400'}`}>
+                                <span className="text-xl">🗺️</span>
+                                <span className="text-[10px] font-medium">行程</span>
+                            </button>
+                            <button onClick={() => setActiveTab('budget')} className={`flex flex-col items-center gap-1 w-1/3 ${activeTab === 'budget' ? 'text-indigo-600' : 'text-gray-400'}`}>
+                                <span className="text-xl">💰</span>
+                                <span className="text-[10px] font-medium">記帳</span>
+                            </button>
+                            <button onClick={() => setActiveTab('info')} className={`flex flex-col items-center gap-1 w-1/3 ${activeTab === 'info' ? 'text-indigo-600' : 'text-gray-400'}`}>
+                                <span className="text-xl">📄</span>
+                                <span className="text-[10px] font-medium">資訊</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
