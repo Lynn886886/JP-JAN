@@ -830,7 +830,8 @@
             const [expandedDay, setExpandedDay] = useState(1);
 
             useEffect(() => {
-                const unlocked = localStorage.getItem('trip_unlocked_1115');
+                // 改用 sessionStorage，這樣關閉分頁後就會重新上鎖
+                const unlocked = sessionStorage.getItem('trip_unlocked_secure');
                 if (unlocked === 'true') {
                     setIsAuthenticated(true);
                 }
@@ -838,7 +839,8 @@
 
             const handleUnlock = () => {
                 setIsAuthenticated(true);
-                localStorage.setItem('trip_unlocked_1115', 'true');
+                // 設定本次連線階段為已解鎖
+                sessionStorage.setItem('trip_unlocked_secure', 'true');
             };
 
             if (!isAuthenticated) {
