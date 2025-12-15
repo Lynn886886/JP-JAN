@@ -63,7 +63,7 @@
             CreditCard, Plane, BedDouble, ChevronDown, ChevronUp, 
             Info, ShoppingBag, Plus, Trash2, Coffee, ExternalLink, 
             FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
-            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound, Store, ShoppingCart
+            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound, Store, ShoppingCart, FerrisWheel, Trees
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
         // --- 4. 行程資料 (Trip Data) ---
@@ -882,7 +882,96 @@
                     {activeTab === 'info' && (
                     <div className="animate-fade-in pt-4 pb-10">
                         
-                        {/* 🔥 新增：大阪必買伴手禮 🔥 */}
+                        {/* 🔥 新增：神戶臨海樂園 景點攻略 🔥 */}
+                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">神戶臨海樂園 景點攻略</h2>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                            
+                            {/* 1. 購物中心 (umie & Mosaic) */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-indigo-400 pl-2">購物中心</h4>
+                                <div className="space-y-3">
+                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                        <div className="flex justify-between items-baseline mb-2">
+                                            <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
+                                                <ShoppingBag size={14}/> umie (北館/南館)
+                                            </span>
+                                            <span className="text-[10px] text-stone-400">空橋相通</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed mb-2">集合服飾、雜貨與大型專賣店的綜合商場。</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {["Uniqlo", "GU", "ZARA", "H&M", "GAP", "無印良品", "ABC-MART", "Francfranc", "Kojima x Bic Camera", "3COINS", "Seria"].map(brand => (
+                                                <span key={brand} className="text-[10px] bg-white border border-stone-200 px-1.5 py-0.5 rounded text-stone-500">{brand}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                        <div className="flex justify-between items-baseline mb-2">
+                                            <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
+                                                <Store size={14}/> Mosaic 馬賽克廣場
+                                            </span>
+                                            <span className="text-[10px] text-stone-400">10:00-22:00</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">開放式歐風商場，特色小店與海景餐廳林立，還有麵包超人博物館。</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="border-stone-100" />
+
+                            {/* 2. 必遊景點 (摩天輪 & 美利堅公園) */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-sky-400 pl-2">必遊景點</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <FerrisWheel size={14} className="text-sky-600"/>
+                                            <span className="font-bold text-stone-800 text-xs">馬賽克大摩天輪</span>
+                                        </div>
+                                        <p className="text-[10px] text-stone-500 mb-1">賞神戶夜景絕佳位置</p>
+                                        <div className="text-[10px] text-stone-400 font-mono">
+                                            ¥800/人<br/>10:00-22:00
+                                        </div>
+                                    </div>
+                                    <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Trees size={14} className="text-sky-600"/>
+                                            <span className="font-bold text-stone-800 text-xs">美利堅公園</span>
+                                        </div>
+                                        <p className="text-[10px] text-stone-500 mb-1">BE KOBE 打卡地標</p>
+                                        <div className="text-[10px] text-stone-400">
+                                            海洋博物館<br/>面海星巴克
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="border-stone-100" />
+
+                            {/* 3. 卡通 & IP 專賣店 */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">卡通 & IP 專賣店</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        {name: "麵包超人博物館", note: "1F 免費商場"},
+                                        {name: "吉卜力共和國", note: "龍貓周邊"},
+                                        {name: "史努比專賣店", note: "Snoopy Town"},
+                                        {name: "KIDDY LAND", note: "綜合IP (卡比/米菲)"},
+                                        {name: "三麗鷗神戶店", note: "Hello Kitty"},
+                                        {name: "奧特曼世界M78", note: "鹹蛋超人"},
+                                        {name: "Disney Avenue", note: "迪士尼周邊"},
+                                        {name: "拉拉熊 & 角落生物", note: "Rilakkuma Store"}
+                                    ].map((shop, i) => (
+                                        <div key={i} className="bg-pink-50/30 p-2 rounded-lg border border-pink-100 flex flex-col justify-center">
+                                            <span className="text-xs font-bold text-stone-700">{shop.name}</span>
+                                            <span className="text-[10px] text-stone-400">{shop.note}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 大阪必買伴手禮 */}
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買伴手禮</h2>
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
                             
@@ -937,7 +1026,7 @@
                             </div>
                         </div>
 
-                        {/* 🔥 新增：大阪必買藥妝 & 電器 🔥 */}
+                        {/* 大阪必買藥妝 & 電器 */}
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買藥妝 & 電器</h2>
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
                             
@@ -1138,8 +1227,8 @@
                         </div>
 
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">航班資訊</h2>
-                        <InfoCard icon={Plane} title="去程航班" content={TRIP_DATA.flights.outbound.time} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
-                        <InfoCard icon={Plane} title="回程航班" content={TRIP_DATA.flights.inbound.time} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
+                        <InfoCard icon={Plane} title="去程航班" content={`${TRIP_DATA.flights.outbound.time} - ${TRIP_DATA.flights.outbound.arrival}`} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
+                        <InfoCard icon={Plane} title="回程航班" content={`${TRIP_DATA.flights.inbound.time} - ${TRIP_DATA.flights.inbound.arrival}`} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
 
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 mt-8 ml-1">住宿資訊</h2>
                         {TRIP_DATA.hotels.map((hotel, i) => (
