@@ -62,8 +62,8 @@
             MapPin, Navigation, Utensils, Train, CloudSun, Calendar, 
             CreditCard, Plane, BedDouble, ChevronDown, ChevronUp, 
             Info, ShoppingBag, Plus, Trash2, Coffee, ExternalLink, 
-            Footprints, AlertTriangle, ArrowRightCircle,
-            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound
+            FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
+            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound, Store
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
         // --- 4. 行程資料 (Trip Data) ---
@@ -760,7 +760,6 @@
                         if (event.type === 'shopping') { Icon = ShoppingBag; themeClass = "border-l-4 border-pink-300"; }
                         if (event.type === 'flight') { Icon = Plane; themeClass = "border-l-4 border-sky-300"; }
                         if (event.type === 'hotel') { Icon = BedDouble; themeClass = "border-l-4 border-indigo-300"; }
-                        if (event.type === 'spot') { Icon = Camera; } // 預設景點圖示
                         if (event.icon) { Icon = event.icon; }
 
                         return (
@@ -883,6 +882,112 @@
                     {activeTab === 'info' && (
                     <div className="animate-fade-in pt-4 pb-10">
                         
+                        {/* 🔥 新增：黑門市場 專屬區塊 🔥 */}
+                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">黑門市場 美食攻略</h2>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                            
+                            {/* 市場基本資訊 */}
+                            <div className="flex gap-4 items-start mb-4">
+                                <div className="bg-red-50 p-3 rounded-xl shrink-0 border border-red-100">
+                                    <Store className="text-red-600" size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-stone-800">黑門市場</h3>
+                                    <p className="text-xs text-stone-500 mt-1">大阪市中央區日本橋2-4-1</p>
+                                    <div className="flex gap-2 mt-2">
+                                        <span className="bg-stone-100 text-stone-600 text-[10px] px-2 py-1 rounded">距飯店步行 5 分</span>
+                                        <span className="bg-stone-100 text-stone-600 text-[10px] px-2 py-1 rounded">08:00-17:00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="border-stone-100" />
+
+                            {/* 必吃早餐 & 小吃 */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-orange-400 pl-2">必吃早餐 & 小吃</h4>
+                                <div className="space-y-3">
+                                    {/* 1. 高橋食品豆漿 */}
+                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-stone-800 text-sm">1. 高橋食品豆漿</span>
+                                            <span className="text-[10px] text-stone-400">09:00-16:00 (日休)</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">號稱「關西第一名豆漿」，開業99年的老字號，早餐首選。</p>
+                                    </div>
+
+                                    {/* 2. 石橋食品關東煮 */}
+                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-stone-800 text-sm">2. 石橋食品關東煮</span>
+                                            <span className="text-[10px] text-stone-400">09:00-17:00 (日休)</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">古法烹調，湯頭鮮美，關東煮超級入味。</p>
+                                    </div>
+
+                                    {/* 3. まぐろや黒銀鮪魚生魚片 */}
+                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-stone-800 text-sm">3. まぐろや黒銀鮪魚</span>
+                                            <span className="text-[10px] text-stone-400">09:00-16:00</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">必點「黑鮪魚前腹肉」，油脂豐富，入口即化。</p>
+                                    </div>
+
+                                    {/* 4. 魚福烤扇貝 */}
+                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-stone-800 text-sm">4. 魚福烤扇貝</span>
+                                            <span className="text-[10px] text-stone-400">09:30-16:00 (三休)</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">奶油烤扇貝必吃！還有北海道空運現剝海膽。</p>
+                                    </div>
+
+                                    {/* 5. 西川鮮魚店 */}
+                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-stone-800 text-sm">5. 西川鮮魚店</span>
+                                            <span className="text-[10px] text-stone-400">10:00-18:00</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">每日新鮮進貨的現剖「海膽」和「生蠔」。</p>
+                                    </div>
+
+                                    {/* 6. 三都屋草莓大福 */}
+                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-stone-800 text-sm">6. 三都屋草莓大福</span>
+                                            <span className="text-[10px] text-stone-400">09:30-18:00</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">70年老店，「草莓大福」必吃，還有麝香葡萄口味與蕨餅。</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="border-stone-100" />
+
+                            {/* 藥妝 & 必買 */}
+                            <div>
+                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">藥妝 & 必買</h4>
+                                <div className="space-y-3">
+                                    <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-pink-800 text-sm">1. OS Drug</span>
+                                            <span className="text-[10px] text-stone-400">黑門三平對面</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">價格極具競爭力！<span className="font-bold text-red-500">注意：不退稅、不刷卡 (僅收現金)</span>。</p>
+                                    </div>
+
+                                    <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-pink-800 text-sm">2. 黑門中川超市</span>
+                                            <span className="text-[10px] text-stone-400">24H 營業</span>
+                                        </div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">烤鰻魚、生魚片、甜點、鮮花、在地蔬果應有盡有，深夜補貨好去處。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* 北野異人館 票價資訊 */}
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">北野異人館 票價資訊</h2>
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
