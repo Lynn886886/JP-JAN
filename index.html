@@ -63,7 +63,7 @@
             CreditCard, Plane, BedDouble, ChevronDown, ChevronUp, 
             Info, ShoppingBag, Plus, Trash2, Coffee, ExternalLink, 
             FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
-            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound, Store
+            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound, Store, ShoppingCart
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
         // --- 4. 行程資料 (Trip Data) ---
@@ -882,7 +882,87 @@
                     {activeTab === 'info' && (
                     <div className="animate-fade-in pt-4 pb-10">
                         
-                        {/* 🔥 新增：黑門市場 專屬區塊 🔥 */}
+                        {/* 🔥 新增：大阪必買伴手禮 🔥 */}
+                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買伴手禮</h2>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                            
+                            {/* 長崎堂 */}
+                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-orange-800 text-sm">1. 長崎堂長崎蛋糕</span>
+                                    <span className="text-[10px] text-stone-400">10:00–17:30 (二三休)</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區心齋橋筋2-1-29</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">創立100週年以上！大阪府認證的「大阪產品」，必買經典蜂蜜蛋糕。</p>
+                            </div>
+
+                            {/* 阿彌陀池大黑 */}
+                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-orange-800 text-sm">2. 阿彌陀池大黑 (難波Walk)</span>
+                                    <span className="text-[10px] text-stone-400">10:00–21:00</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區難波2-1-13</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">特色「栗米香」酥脆香甜，「岩米香」帶有生薑辛辣與黑糖甜味，口感硬脆。</p>
+                            </div>
+
+                            {/* 食倒太郎布丁 */}
+                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-orange-800 text-sm">3. 食倒太郎布丁</span>
+                                    <span className="text-[10px] text-stone-400">09:30–21:30</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區道頓堀1-8-25</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">大阪招牌人物「食倒太郎」，萌翻天的小丑帽包裝，內含甜滋滋焦糖布丁。</p>
+                            </div>
+
+                            {/* 千鳥屋宗家 */}
+                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-orange-800 text-sm">4. 千鳥屋宗家</span>
+                                    <span className="text-[10px] text-stone-400">08:30–20:00 (日休)</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區本町3-4-12</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">創業395年，必買「みたらし小餅」，米香濃厚爆漿鹹甜醬汁 (保存期限僅3天)。</p>
+                            </div>
+
+                            {/* UHA味覺糖 */}
+                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-orange-800 text-sm">5. UHA味覺糖 Cororo</span>
+                                    <span className="text-[10px] text-stone-400">11:00–20:00 (週末10:00~)</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">大阪市北區角田町8−7 (阪急梅田B1F)</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">高級版Cororo，尺寸放大1.5倍，果汁含量更高。推薦巨峰葡萄、麝香葡萄口味。</p>
+                            </div>
+                        </div>
+
+                        {/* 🔥 新增：大阪必買藥妝 & 電器 🔥 */}
+                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買藥妝 & 電器</h2>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                            
+                            {/* 唐吉軻德 */}
+                            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-blue-800 text-sm">1. 驚安殿堂唐吉軻德 (道頓堀)</span>
+                                    <span className="text-[10px] text-stone-400">24H 營業</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">7-13 Souemoncho, Chuo Ward, Osaka</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">商品種類最齊全，24小時營業隨時可逛，藥妝零食電器一站購足。</p>
+                            </div>
+
+                            {/* Bic Camera */}
+                            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="font-bold text-blue-800 text-sm">2. Bic Camera 難波店</span>
+                                    <span className="text-[10px] text-stone-400">10:00-22:00</span>
+                                </div>
+                                <div className="text-[10px] text-stone-500 mb-1">2 Chome-10-1 Sennichimae, Chuo Ward, Osaka</div>
+                                <p className="text-xs text-stone-600 leading-relaxed">大型電器連鎖店，各類家電、美容儀器、遊戲主機應有盡有。</p>
+                            </div>
+                        </div>
+
+                        {/* 黑門市場 專屬區塊 */}
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">黑門市場 美食攻略</h2>
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
                             
@@ -1058,8 +1138,8 @@
                         </div>
 
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">航班資訊</h2>
-                        <InfoCard icon={Plane} title="去程航班" content={`${TRIP_DATA.flights.outbound.time} - ${TRIP_DATA.flights.outbound.arrival}`} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
-                        <InfoCard icon={Plane} title="回程航班" content={`${TRIP_DATA.flights.inbound.time} - ${TRIP_DATA.flights.inbound.arrival}`} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
+                        <InfoCard icon={Plane} title="去程航班" content={TRIP_DATA.flights.outbound.time} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
+                        <InfoCard icon={Plane} title="回程航班" content={TRIP_DATA.flights.inbound.time} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
 
                         <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 mt-8 ml-1">住宿資訊</h2>
                         {TRIP_DATA.hotels.map((hotel, i) => (
