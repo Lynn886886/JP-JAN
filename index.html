@@ -1058,6 +1058,7 @@
                                         autoComplete="off"
                                         value={password} 
                                         onChange={(e) => { 
+                                            // 修正：僅設定狀態，不做即時字元替換，避免重複輸入問題
                                             setPassword(e.target.value); 
                                             setAuthError(false); 
                                         }} 
