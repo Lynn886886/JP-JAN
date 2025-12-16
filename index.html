@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大阪神戶寒假行 2026</title>
+    <title>大阪神戶寒假行 2026 (雲端版)</title>
     
-    <!-- 1. 載入 Tailwind CSS (樣式) -->
+    <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -21,53 +21,129 @@
         }
     </script>
     
-    <!-- 2. 載入 React 和 Babel (核心) -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- 2. 載入 Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        /* 隱藏捲軸但保持功能 (更像原生 App) */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         body {
-            background-color: #f5f5f4; /* Stone-100 */
+            background-color: #f5f5f4;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #44403c;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- 3. React 應用程式邏輯 -->
+    <!-- 3. React + Firebase 應用程式邏輯 -->
     <script type="text/babel" data-type="module">
-        // 匯入必要的函式庫
-        import { useState, useEffect } from 'https://esm.sh/react@18?dev';
+        import React, { useState, useEffect } from 'https://esm.sh/react@18?dev';
         import { createRoot } from 'https://esm.sh/react-dom@18/client?dev';
-        // 匯入圖示庫 (Lucide React)
         import { 
             MapPin, Navigation, Utensils, Train, CloudSun, Calendar, 
             CreditCard, Plane, BedDouble, ChevronDown, ChevronUp, 
             Info, ShoppingBag, Plus, Trash2, Coffee, ExternalLink, 
             FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
-            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, Lock, KeyRound, Store, ShoppingCart, FerrisWheel, Trees
+            Camera, Ticket, Ship, Car, Landmark, Bus, Image as ImageIcon, 
+            Lock, KeyRound, Store, ShoppingCart, Trees, FerrisWheel,
+            Wallet, UploadCloud, RefreshCw, XCircle, CheckCircle2, WifiOff, Save
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
-        // --- 4. 行程資料 (Trip Data) ---
-        const TRIP_DATA = {
+        // --- Firebase SDK Imports ---
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, doc, getDoc, setDoc, 
+            addDoc, onSnapshot, query, orderBy, deleteDoc, serverTimestamp,
+            initializeFirestore, memoryLocalCache 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 建立 Icon 對照表
+        const ICON_MAP = {
+            MapPin, Navigation, Utensils, Train, CloudSun, Calendar,
+            CreditCard, Plane, BedDouble, ChevronDown, ChevronUp,
+            Info, ShoppingBag, Plus, Trash2, Coffee, ExternalLink,
+            FileSpreadsheet, Footprints, AlertTriangle, ArrowRightCircle,
+            Camera, Ticket, Ship, Car, Landmark, Bus, ImageIcon,
+            Lock, KeyRound, Store, ShoppingCart, Trees, FerrisWheel,
+            Wallet, UploadCloud, RefreshCw, XCircle, CheckCircle2, WifiOff, Save
+        };
+
+        const getIcon = (iconName) => {
+            return ICON_MAP[iconName] || MapPin;
+        };
+
+        // ==========================================
+        // 🔥 設定區：Firebase Config 🔥
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDc4SevImnUI9VgyOPdlWBsLXY7jfujRyU",
+            authDomain: "jptrip202601-3df97.firebaseapp.com",
+            projectId: "jptrip202601-3df97",
+            storageBucket: "jptrip202601-3df97.firebasestorage.app",
+            messagingSenderId: "590547128124",
+            appId: "1:590547128124:web:e75559668273588da31839"
+        };
+
+        // 初始化 Firebase
+        let db;
+        let isFirebaseReady = false;
+        let initErrorMsg = "";
+
+        try {
+            if (firebaseConfig.apiKey) {
+                if (getApps().length === 0) {
+                    const app = initializeApp(firebaseConfig);
+                    // 使用記憶體快取 + 強制長輪詢以解決環境連線問題
+                    db = initializeFirestore(app, {
+                        localCache: memoryLocalCache(),
+                        experimentalForceLongPolling: true 
+                    });
+                    console.log("Firebase initialized (New Instance with Long Polling)");
+                } else {
+                    const app = getApp();
+                    try {
+                        db = getFirestore(app);
+                    } catch {
+                         db = initializeFirestore(app, {
+                            localCache: memoryLocalCache(),
+                            experimentalForceLongPolling: true
+                        });
+                    }
+                    console.log("Firebase initialized (Existing Instance)");
+                }
+                isFirebaseReady = true;
+            } else {
+                initErrorMsg = "設定檔空白";
+                console.warn("Firebase config is missing!");
+            }
+        } catch (e) {
+            console.error("Firebase init error:", e);
+            initErrorMsg = e.message;
+        }
+
+        // --- 預設行程資料 (完整版：包含所有詳細資訊) ---
+        const DEFAULT_TRIP_DATA = {
             flights: {
                 outbound: { 
                     date: "1/11", 
@@ -75,8 +151,7 @@
                     time: "09:00", 
                     to: "神戶 UKB 神戶機場 T2", 
                     arrival: "12:30",
-                    // 您可以在這裡加入航空公司圖片網址，若無則留空
-                    // image: "https://example.com/airline-logo.jpg" 
+                    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=800"
                 },
                 inbound: { 
                     date: "1/18", 
@@ -94,7 +169,6 @@
                     checkIn: "15:00",
                     checkOut: "11:00",
                     note: "近鐵日本橋站 Exit 10 (有電梯) / 飯店位於全家便利商店旁",
-                    // 🔥 替換這裡的網址為您的飯店照片 🔥
                     image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800" 
                 },
                 {
@@ -104,7 +178,6 @@
                     checkIn: "15:00",
                     checkOut: "11:00",
                     note: "歐式中世紀風格建築 / 生田神社附近",
-                    // 🔥 替換這裡的網址為您的飯店照片 🔥
                     image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"
                 }
             ],
@@ -120,46 +193,36 @@
                     type: 'transport', 
                     time: "13:00", 
                     title: "移動：機場 → 大阪飯店", 
-                    desc: "神戶機場搭 Port Liner 轉 阪神電車。\n（詳細轉乘路線請參見下方攻略）",
+                    desc: "神戶機場搭 Port Liner 轉 阪神電車。",
                     isImportant: true,
-                    // 🔥 1/11 移動攻略 (新增)
                     detailedGuide: {
                         title: "1/11 移動攻略：機場 ➔ 大阪",
                         strategy: "Port Liner + 阪神電車 (關鍵在三宮轉車)",
                         steps: [
-                            { 
-                                icon: Plane,
-                                title: "第一段：機場 → 三宮", 
-                                desc: "1. 抵達口 (1F) 搭電梯上 2F。\n2. 搭乘 Port Liner 往「三宮」。\n💰 票價：340 日圓" 
-                            },
-                            { 
-                                icon: ArrowRightCircle, 
-                                title: "第二段：三宮轉車 (關鍵！)", 
-                                desc: "Port Liner 出站往右看，找綠色 MINT 百貨。\n✅ 推薦：找入口附近電梯直達 B1，進「阪神電車 東改札口」。" 
-                            },
-                            { 
-                                icon: Train,
-                                title: "第三段：搭乘阪神電車", 
-                                desc: "月台：2 號月台 (往大阪難波/奈良)。\n⚠️ 下車注意：經過難波站「請勿下車」！多搭一站至「近鐵日本橋」下車。\n💰 票價：約 630 日圓 (阪神+近鐵)" 
-                            },
-                            { 
-                                icon: MapPin,
-                                title: "第四段：日本橋站 → 飯店", 
-                                desc: "走東改札口，找 Exit 10 (有電梯)。\n地面：出電梯過馬路到對面(原6號出口側)，往北 (逆車流) 走，過全家即抵達。" 
-                            }
+                            { icon: "Plane", title: "Step 1: 機場 → 三宮", desc: "1. 抵達口 (1F) 搭電梯上 2F。\n2. 搭乘 Port Liner 往「三宮」。\n💰 票價：340 日圓" },
+                            { icon: "ArrowRightCircle", title: "Step 2: 三宮轉車 (關鍵！)", desc: "Port Liner 出站往右看，找綠色 MINT 百貨。\n✅ 推薦：找入口附近電梯直達 B1，進「阪神電車 東改札口」。" },
+                            { icon: "Train", title: "Step 3: 搭乘阪神電車", desc: "月台：2 號月台 (往大阪難波/奈良)。\n⚠️ 下車注意：經過難波站「請勿下車」！多搭一站至「近鐵日本橋」下車。\n💰 票價：約 630 日圓 (阪神+近鐵)" },
+                            { icon: "MapPin", title: "Step 4: 日本橋站 → 飯店", desc: "走東改札口，找 Exit 10 (有電梯)。\n地面：出電梯過馬路到對面(原6號出口側)，往北 (逆車流) 走，過全家即抵達。" }
                         ]
                     } 
                     },
                     { 
-                    type: 'food', 
-                    time: "14:30", 
-                    title: "午餐：牛かつもと村", 
-                    desc: "半熟炸牛排定食，可自己烤。通常需排隊。", 
-                    subDesc: "💰 平均預算：約 ¥1,400 ~ ¥2,200\n交通方式：從飯店約步行9分鐘\n地址：Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka\n營業時間：11:00-22:00",
-                    tags: ["必吃", "排隊名店"],
-                    address: "Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka"
+                        type: 'food', 
+                        time: "14:30", 
+                        title: "午餐：牛かつもと村", 
+                        desc: "半熟炸牛排定食，可自己烤。通常需排隊。", 
+                        subDesc: "💰 平均預算：約 ¥1,400 ~ ¥2,200\n📍 地址：Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka\n⏰ 營業時間：11:00-22:00 (L.O. 21:00)\n🚶 交通：從飯店步行約 9 分鐘\n💡 特色：石板現烤，肉質軟嫩，推薦沾芥末醬油。",
+                        tags: ["必吃", "排隊名店"],
+                        address: "Gour Cuss City, 2 Chome-4-2 Shinsaibashisuji, Chuo Ward, Osaka" 
                     },
-                    { type: 'spot', time: "16:00", title: "黑門市場 / 道頓堀", desc: "逛街、吃小吃、跑跑人看板", address: "Dotonbori, Osaka" }
+                    { 
+                        type: 'spot', 
+                        time: "16:00", 
+                        title: "黑門市場 / 道頓堀", 
+                        desc: "逛街、吃小吃、跑跑人看板。", 
+                        subDesc: "⏰ 營業時間：黑門市場約至 18:00，道頓堀店家營業至深夜\n📍 重點：黑門市場必吃海鮮、草莓大福；道頓堀必拍跑跑人。\n💡 提醒：部分店家只收現金。",
+                        address: "Dotonbori, Osaka" 
+                    }
                 ]
                 },
                 {
@@ -168,18 +231,39 @@
                 location: "琵琶湖",
                 weather: "多雲 5°C",
                 events: [
-                    { type: 'transport', time: "07:50", title: "KKday 集合", desc: "近鐵日本橋車站2號出口集合", address: "近鐵日本橋車站" },
-                    { type: 'spot', time: "10:20", title: "白須神社", desc: "拍攝湖中大鳥居 (藍湖白鬚台展望台)", tags: ["拍照熱點"] },
-                    { type: 'spot', time: "11:30", title: "琵琶湖觀景台", desc: "午餐自理，若纜車停駛則改去三千院" },
-                    { type: 'spot', time: "15:10", title: "La Collina 近江八幡", desc: "童話草屋甜點店", tags: ["甜點"] },
+                    { type: 'transport', time: "07:50", title: "KKday 集合", desc: "近鐵日本橋車站2號出口集合 (07:50-08:00)", address: "近鐵日本橋車站" },
                     { 
-                    type: 'food', 
-                    time: "19:00", 
-                    title: "晚餐：北極星蛋包飯", 
-                    desc: "蛋包飯發源地，需脫鞋。", 
-                    subDesc: "💰 平均預算：約 ¥1,080 ~ ¥1,600\n交通方式：從飯店步行約12分鐘\n地址：2 Chome-7-27 Nishishinsaibashi, Chuo Ward, Osaka, 542-0086 日本\n營業時間：11:30~21:30",
-                    tags: ["必吃", "老店"],
-                    address: "2 Chome-7-27 Nishishinsaibashi, Chuo Ward, Osaka" 
+                        type: 'spot', 
+                        time: "10:20", 
+                        title: "白須神社", 
+                        desc: "拍攝湖中大鳥居，近江最古老的大社。", 
+                        subDesc: "📍 地址：滋賀県高島市鵜川215\n💡 特色：水中鳥居景色絕美，有「近江嚴島」之稱。\n⏰ 停留時間：約 40 分鐘",
+                        tags: ["拍照熱點"] 
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "11:30", 
+                        title: "琵琶湖觀景台 (Biwako Valley)", 
+                        desc: "搭乘日本最快纜車前往標高1100m的觀景台。", 
+                        subDesc: "📍 地址：滋賀県大津市木戸1547-1\n💰 纜車費用：往返約 ¥3,500 (通常含在團費或自理)\n💡 特色：The Main 露台可俯瞰琵琶湖全景。",
+                        tags: ["絕景"]
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "15:10", 
+                        title: "La Collina 近江八幡", 
+                        desc: "像吉卜力動畫場景的甜點童話村。", 
+                        subDesc: "📍 地址：滋賀県近江八幡市北之庄町615-1\n⏰ 營業時間：09:00-18:00\n💡 必吃：剛出爐的年輪蛋糕 (Baumkuchen)，保存期限短只能現場吃。",
+                        tags: ["甜點", "網美景點"] 
+                    },
+                    { 
+                        type: 'food', 
+                        time: "19:00", 
+                        title: "晚餐：北極星蛋包飯", 
+                        desc: "蛋包飯發源地，傳統日式榻榻米座位(需脫鞋)。", 
+                        subDesc: "💰 平均預算：約 ¥1,080 ~ ¥1,600\n📍 地址：大阪市中央區西心齋橋2-7-27\n⏰ 營業時間：11:30~21:30\n🚶 交通：從飯店步行約 12 分鐘\n💡 特色：百年老屋，必點雞肉蛋包飯。",
+                        tags: ["必吃", "老店"],
+                        address: "2 Chome-7-27 Nishishinsaibashi, Chuo Ward, Osaka" 
                     }
                 ]
                 },
@@ -190,16 +274,37 @@
                 weather: "陰短暫雨 4°C",
                 events: [
                     { type: 'transport', time: "07:10", title: "KKday 集合", desc: "近鐵日本橋車站2號出口", address: "近鐵日本橋車站" },
-                    { type: 'spot', time: "09:50", title: "伊根舟屋", desc: "日本威尼斯，可散步或騎單車", tags: ["絕景"] },
-                    { type: 'spot', time: "11:10", title: "天橋立觀景台", desc: "日本三景之一，推薦順遊智恩寺", address: "Amanohashidate Viewland" },
-                    { type: 'spot', time: "14:40", title: "美山茅屋部落", desc: "京都合掌村", tags: ["世界遺產氛圍"] },
+                    { 
+                        type: 'spot', 
+                        time: "09:50", 
+                        title: "伊根舟屋", 
+                        desc: "日本威尼斯，傳統臨海建築群。", 
+                        subDesc: "📍 地址：京都府与謝郡伊根町\n💡 特色：一樓為船庫、二樓為住家的獨特建築。\n🚢 體驗：可搭乘遊覽船餵海鷗 (約 ¥1,000)。",
+                        tags: ["絕景", "傳統建築"] 
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "11:10", 
+                        title: "天橋立觀景台", 
+                        desc: "日本三景之一，著名的「飛龍觀」。", 
+                        subDesc: "📍 地址：京都府宮津市\n💰 纜車/單軌電車：往返約 ¥850\n💡 玩法：背對景色彎腰從跨下看，沙洲會像一條飛龍在天。",
+                        address: "Amanohashidate Viewland" 
+                    },
+                    { 
+                        type: 'spot', 
+                        time: "14:40", 
+                        title: "美山茅屋部落", 
+                        desc: "京都合掌村，日本原生風景。", 
+                        subDesc: "📍 地址：京都府南丹市美山町\n💡 特色：現存約38棟茅草屋，寧靜的山村氛圍。\n🍦 必吃：美山牛乳霜淇淋、雞蛋布丁。",
+                        tags: ["世界遺產氛圍"] 
+                    },
                     { 
                     type: 'food', 
                     time: "19:00", 
                     title: "晚餐：燒肉力丸", 
-                    desc: "難波道頓堀店，需預訂。", 
-                    subDesc: "💰 平均預算：吃到飽方案約 ¥3,498 ~ ¥5,808\n交通方式：與飯店距離約7分鐘\n地址：日本〒542-0071 Osaka, Chuo Ward, Dotonbori, 1 Chome-9-1 5F\n營業時間：11:30~01:30",
-                    tags: ["預約制", "燒肉"], 
+                    desc: "國產牛吃到飽，肉質佳，CP值高。", 
+                    subDesc: "💰 平均預算：吃到飽方案約 ¥3,498 ~ ¥5,808\n📍 地址：日本〒542-0071 Osaka, Chuo Ward, Dotonbori, 1 Chome-9-1 5F\n⏰ 營業時間：11:30~01:30\n🚶 交通：與飯店距離約7分鐘\n💡 特色：厚切牛舌與橫膈膜必點。",
+                    tags: ["預約制", "燒肉"],
                     address: "1 Chome-9-1 Dotonbori, Osaka" 
                     }
                 ]
@@ -214,16 +319,16 @@
                         type: 'transport', 
                         time: "07:45", 
                         title: "KKday 集合", 
-                        desc: "日本橋(大阪)近鐵日本橋2號出口集合\n（7:45~8:00集合，逾時不候）", 
-                        subDesc: "地址：1 Chome-3-3番11 Nipponbashi, Chuo Ward, Osaka",
-                        address: "近鐵日本橋車站" 
+                        desc: "日本橋(大阪)近鐵日本橋2號出口集合。", 
+                        subDesc: "📍 地址：1 Chome-3-3番11 Nipponbashi, Chuo Ward, Osaka\n⏰ 集合時間：07:45~08:00 (逾時不候)\n⚠️ 提醒：請認明 KKday 領隊或旗幟。",
+                        address: "1 Chome-3-3 Nipponbashi, Chuo Ward, Osaka" 
                     },
                     { 
                         type: 'spot', 
                         time: "10:00", 
                         title: "勝尾寺 (Katsuo-ji)", 
-                        desc: "祈求勝運的靈驗寺廟，滿山滿谷的達摩不倒翁是最大特色。", 
-                        subDesc: "停留時間：約 70 分鐘\n門票：成人 500 日圓",
+                        desc: "祈求勝運的靈驗寺廟，滿山滿谷的達摩。", 
+                        subDesc: "📍 地址：大阪府箕面市勝尾寺\n💰 門票：成人 ¥500\n⏰ 停留時間：約70分鐘\n💡 特色：隨處可見的迷你達摩，祈求考運與勝運。",
                         tags: ["必勝祈願", "達摩"],
                         address: "Katsuo-ji" 
                     },
@@ -232,7 +337,7 @@
                         time: "12:45", 
                         title: "嵐山散策 & 午餐", 
                         desc: "漫步竹林小徑、渡月橋、和服森林。", 
-                        subDesc: "停留時間：約 150 分鐘\n午餐：自費體驗京都傳統料理 (推薦：湯豆腐、蕎麥麵)",
+                        subDesc: "📍 地標：渡月橋、野宮神社\n⏰ 停留時間：約 150 分鐘\n💡 推薦：% Arabica 咖啡、京豆庵豆腐霜淇淋。",
                         tags: ["世界遺產", "竹林"],
                         address: "Arashiyama Bamboo Grove" 
                     },
@@ -240,8 +345,8 @@
                         type: 'spot', 
                         time: "16:15", 
                         title: "金閣寺 (Kinkaku-ji)", 
-                        desc: "閃耀著金色光輝的舍利殿，京都必訪名勝。", 
-                        subDesc: "停留時間：約 40 分鐘\n門票：成人 500 日圓",
+                        desc: "閃耀著金色光輝的舍利殿。", 
+                        subDesc: "📍 地址：京都市北区金閣寺町1\n💰 門票：成人 ¥500\n⏰ 停留時間：約40分鐘\n⏰ 開放時間：09:00-17:00\n💡 拍照：下午陽光照射下金碧輝煌最美。",
                         tags: ["世界遺產", "金碧輝煌"],
                         address: "Kinkaku-ji" 
                     },
@@ -249,15 +354,15 @@
                         type: 'transport', 
                         time: "18:30", 
                         title: "行程結束", 
-                        desc: "返回大阪近鐵日本橋站解散", 
+                        desc: "返回大阪近鐵日本橋站解散。", 
                         address: "近鐵日本橋車站" 
                     },
                     { 
                         type: 'food', 
                         time: "19:00", 
                         title: "晚餐：福太郎大阪燒 本店", 
-                        desc: "米其林推薦的人氣大阪燒名店，必點蔥花燒(Negiyaki)。", 
-                        subDesc: "💰 平均預算：約 ¥1,000 ~ ¥2,000\n地址：大阪府大阪市中央区千日前2-3-17\n營業時間：平日 17:00-23:30 / 週末假日 12:00-23:30\n特色：現點現做，坐在吧台看師傅料理，口感鬆軟滑嫩。",
+                        desc: "米其林推薦的人氣大阪燒名店。", 
+                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥2,500\n📍 地址：大阪市中央区千日前2-3-17\n⏰ 營業時間：平日 17:00-23:30 / 週末假日 12:00-23:30\n💡 必點：蔥花燒 (Negiyaki)，口感鬆軟滑嫩。",
                         tags: ["米其林推薦", "排隊名店"],
                         address: "2 Chome-3-17 Sennichimae, Chuo Ward, Osaka" 
                     }
@@ -278,26 +383,10 @@
                     detailedGuide: {
                         strategy: "最省力！近鐵/阪神直通運轉 (免轉乘)",
                         steps: [
-                            { 
-                                icon: Footprints,
-                                title: "Step 1: 前往車站 (行李攻略)", 
-                                desc: "雖然飯店在難波，但離「近鐵日本橋站」更近。\n✅ 請走 Exit 10 (10號出口)，有電梯！\n❌ 避開 Exit 6 (只有樓梯)。" 
-                            },
-                            { 
-                                icon: Train,
-                                title: "Step 2: 進站搭車 (關鍵)", 
-                                desc: "刷卡進站，尋找往「尼崎・神戶三宮」月台。\n✅ 請搭乘：紅色字體「快速急行 (Rapid Express)」\n⚠️ 絕對禁止：橘色字體「特急 (Limited Express)」，這是全車指定席，誤搭需補高額票價！" 
-                            },
-                            { 
-                                icon: ArrowRightCircle,
-                                title: "Step 3: 抵達神戶三宮", 
-                                desc: "列車會直通阪神線，一路坐到「神戶三宮站 (阪神)」下車。\n💡 請往「西口 (West Exit)」改札口出站，這裡有手扶梯或電梯。" 
-                            },
-                            { 
-                                icon: MapPin,
-                                title: "Step 4: 步行至飯店", 
-                                desc: "出西口後往北 (山側) 走，沿生田路步行約 7-10 分鐘，即可看到歐式建築的蒙特利酒店。" 
-                            }
+                            { icon: "Footprints", title: "Step 1: 前往車站 (行李攻略)", desc: "雖然飯店在難波，但離「近鐵日本橋站」更近。\n✅ 請走 Exit 10 (10號出口)，有電梯！\n❌ 避開 Exit 6 (只有樓梯)。" },
+                            { icon: "Train", title: "Step 2: 進站搭車 (關鍵)", desc: "刷卡進站，尋找往「尼崎・神戶三宮」月台。\n✅ 請搭乘：紅色字體「快速急行 (Rapid Express)」\n⚠️ 絕對禁止：橘色字體「特急 (Limited Express)」，這是全車指定席，誤搭需補高額票價！" },
+                            { icon: "ArrowRightCircle", title: "Step 3: 抵達神戶三宮", desc: "列車會直通阪神線，一路坐到「神戶三宮站 (阪神)」下車。\n💡 請往「西口 (West Exit)」改札口出站，這裡有手扶梯或電梯。" },
+                            { icon: "MapPin", title: "Step 4: 步行至飯店", desc: "出西口後往北 (山側) 走，沿生田路步行約 7-10 分鐘，即可看到歐式建築的蒙特利酒店。" }
                         ]
                     }
                     },
@@ -306,8 +395,8 @@
                     type: 'food', 
                     time: "12:00", 
                     title: "午餐：Kobe Beef Steak Sakura", 
-                    desc: "神戶牛排體驗",
-                    subDesc: "💰 平均預算：午餐套餐約 ¥6,000 ~ ¥8,000 (依部位而定)\n交通方式：從蒙特利酒店約步行2分鐘\n地址：日本〒650-0011 Hyogo, Kobe, Chuo Ward, Shimoyamatedori, 2 Chome-17-10 2F\n營業時間：11:30-14:00; 17:00-21:00", 
+                    desc: "神戶牛排體驗，提供高品質 A5 神戶牛。",
+                    subDesc: "💰 平均預算：午餐套餐約 ¥5,000 ~ ¥8,000\n📍 地址：神戶市中央區下山手通2-17-10 (2F)\n⏰ 營業時間：11:30-14:00; 17:00-21:00\n🚶 交通：從蒙特利酒店步行約 2 分鐘\n💡 特色：近飯店，裝潢典雅，午間套餐 CP 值高。",
                     tags: ["必吃", "神戶牛"],
                     address: "2 Chome-17-10 Shimoyamatedori, Kobe" 
                     },
@@ -316,26 +405,15 @@
                         time: "14:00", 
                         title: "神戶港散策", 
                         desc: "臨海樂園、馬賽克廣場自由活動。", 
+                        subDesc: "📍 地點：Kobe Harborland\n💡 亮點：紅磚倉庫、麵包超人博物館、馬賽克大摩天輪。\n🚶 交通：從三宮搭 JR 到神戶站，步行 5 分鐘。",
                         address: "Kobe Harborland",
                         detailedGuide: {
                             title: "移動攻略：前往臨海樂園",
                             strategy: "步行 + JR 神戶線 (約 25 分鐘)",
                             steps: [
-                                { 
-                                    icon: Footprints,
-                                    title: "Step 1: 步行至 JR 三之宮站 (約 8 分)", 
-                                    desc: "從餐廳沿熱鬧的生田路往車站方向走。\n🎯 目標：JR 三之宮站「西口」或「中央口」。" 
-                                },
-                                { 
-                                    icon: Train,
-                                    title: "Step 2: 搭乘 JR 神戶線 (約 4 分)", 
-                                    desc: "✅ 起點：JR 三之宮 → 🏁 終點：JR 神戶站 (Kobe Station)。\n⚠️ 注意：請在「神戶站」下車 (不是新神戶/神戶三宮)。\n🚄 方向：往姬路、西明石。車種皆可搭 (新快速/快速/普通)。" 
-                                },
-                                { 
-                                    icon: MapPin,
-                                    title: "Step 3: 步行至臨海樂園", 
-                                    desc: "JR 神戶站「中央口」出站。\n👉 跟隨「Harborland」或「umie」指標，經地下街 (Duo Kobe) 直通馬賽克廣場。" 
-                                }
+                                { icon: "Footprints", title: "Step 1: 步行至 JR 三之宮站 (約 8 分)", desc: "從餐廳沿熱鬧的生田路往車站方向走。\n🎯 目標：JR 三之宮站「西口」或「中央口」。" },
+                                { icon: "Train", title: "Step 2: 搭乘 JR 神戶線 (約 4 分)", desc: "✅ 起點：JR 三之宮 → 🏁 終點：JR 神戶站 (Kobe Station)。\n⚠️ 注意：請在「神戶站」下車 (不是新神戶/神戶三宮)。\n🚄 方向：往姬路、西明石。車種皆可搭 (新快速/快速/普通)。" },
+                                { icon: "MapPin", title: "Step 3: 步行至臨海樂園", desc: "JR 神戶站「中央口」出站。\n👉 跟隨「Harborland」或「umie」指標，經地下街 (Duo Kobe) 直通馬賽克廣場。" }
                             ]
                         },
                         attractions: [
@@ -355,10 +433,10 @@
                             title: "遊船行程表",
                             strategy: "浪漫夕陽與夜景",
                             steps: [
-                                { icon: Footprints, title: "15:45 - 16:00 | 前往櫃台", desc: "慢慢走到 Mosaic 1 樓的 Concerto (協奏曲號) 櫃台準備報到。" },
-                                { icon: Ticket, title: "16:00 | 報到", desc: "換取登船證" },
-                                { icon: Ship, title: "16:30 - 18:15 | 出航", desc: "🚢 神戶協奏曲號 (Concerto) 遊海" },
-                                { icon: Camera, title: "18:15 - 18:30 | 下船", desc: "下船 & 拍攝港灣夜景" }
+                                { icon: "Footprints", title: "15:45 - 16:00 | 前往櫃台", desc: "慢慢走到 Mosaic 1 樓的 Concerto (協奏曲號) 櫃台準備報到。" },
+                                { icon: "Ticket", title: "16:00 | 報到", desc: "換取登船證" },
+                                { icon: "Ship", title: "16:30 - 18:15 | 出航", desc: "🚢 神戶協奏曲號 (Concerto) 遊海" },
+                                { icon: "Camera", title: "18:15 - 18:30 | 下船", desc: "下船 & 拍攝港灣夜景" }
                             ]
                         }
                     },
@@ -367,7 +445,7 @@
                         time: "18:30", 
                         title: "晚餐：商場覓食 (Mosaic / Umie)", 
                         desc: "結束遊船後，直接在 Mosaic 馬賽克廣場或 Umie 購物中心享用晚餐。", 
-                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥3,000\n地點：Mosaic 廣場 2F/3F 或 Umie 南館/北館\n推薦：可選擇面對港灣景觀的餐廳，延續遊船的浪漫氛圍。",
+                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥3,000\n📍 地點：Mosaic 廣場 2F/3F\n⏰ 營業時間：至 22:00\n💡 推薦：Eggs 'n Things (鬆餅)、Fisherman's Market (海鮮自助)。",
                         tags: ["自由食", "景觀餐廳"],
                         address: "Kobe Harborland umie Mosaic" 
                     },
@@ -376,7 +454,7 @@
                         time: "19:00", 
                         title: "神戶港塔", 
                         desc: "欣賞神戶千萬夜景",
-                        subDesc: "地址：日本〒650-0042 Hyogo, Kobe, Chuo Ward, Hatobacho, 5-5\n營業時間：09:00-23:00 (※最後入場時間為晚上10時半)",
+                        subDesc: "📍 地址：日本〒650-0042 Hyogo, Kobe, Chuo Ward, Hatobacho, 5-5\n⏰ 營業時間：09:00-23:00 (※最後入場時間為晚上10時半)",
                         attractions: [
                             { label: "門票 (展望層+屋頂)", text: "成人 1,200日圓 (高中生及以上)" },
                             { label: "門票 (僅展望層)", text: "成人 1,000日圓 (高中生及以上)" }
@@ -389,7 +467,7 @@
                         title: "返回飯店", 
                         desc: "搭乘計程車",
                         subDesc: "交通方式：直接攔車或使用 Uber / GO App 返回蒙特利酒店",
-                        icon: Car 
+                        icon: "Car" 
                     }
                 ]
                 },
@@ -403,27 +481,26 @@
                         type: 'food', 
                         time: "09:00", 
                         title: "早餐：Nishimura's Coffee", 
-                        desc: "75年歷史德式咖啡廳 (中山手本店)", 
-                        subDesc: "💰 平均預算：約 ¥1,000 ~ ¥1,500\n交通方式：從蒙特利酒店步行約 7 分鐘\n地址：1 Chome-26-3 Nakayamatedori, Chuo Ward, Kobe\n營業時間：08:30-23:00",
-                        tags: ["老派浪漫"],
+                        desc: "75年歷史德式咖啡廳 (中山手本店)，神戶咖啡文化的代表。", 
+                        subDesc: "💰 平均預算：約 ¥1,000 ~ ¥1,500\n📍 地址：神戶市中央區中山手通1-26-3\n⏰ 營業時間：08:30-23:00\n🚶 交通：從蒙特利酒店步行約 7 分鐘\n💡 特色：必點早餐套餐，感受神戶的老派優雅。",
+                        tags: ["老派浪漫", "人氣早餐"],
                         address: "1 Chome-26-3 Nakayamatedori, Kobe" 
                     },
                     { 
                         type: 'spot', 
                         time: "10:15", 
-                        title: "北野天滿宮 (Kitano Tenmangu)", 
-                        desc: "供奉學問之神菅原道真，可俯瞰風見雞之館與神戶市景。",
-                        subDesc: "交通方式：走路從 Nishimura's Coffee 到天滿宮約 12 分鐘", 
-                        tags: ["學問之神", "考生聖地", "絕佳視野"],
+                        title: "北野天滿宮", 
+                        desc: "供奉學問之神，可俯瞰風見雞之館。", 
+                        subDesc: "📍 地址：北野町3-12\n🚶 交通：走路從 Nishimura's Coffee 到天滿宮約 12 分鐘\n💡 特色：爬上階梯後的視野極佳，可看見神戶市景。",
+                        tags: ["學問之神", "絕佳視野"],
                         address: "Kitano Tenmangu Shrine" 
                     },
                     { 
                         type: 'spot', 
                         time: "10:45", 
                         title: "北野異人館街", 
-                        desc: "明治時代留下的外國人住宅區，充滿異國情調。", 
+                        desc: "明治時代的外國人住宅區。", 
                         address: "Kitano Ijinkan-gai",
-                        // 🔥 註明票價請見資訊欄
                         subDesc: "※ 詳細票價資訊請參見「資訊」頁面",
                         attractions: [
                             { label: "必去", text: "百年星巴克 (Starbucks Kobe Kitano Ijinkan)\n日本登錄有形文化財，洋式木造建築，必訪打卡點。" },
@@ -433,31 +510,11 @@
                             title: "異人館參觀攻略",
                             strategy: "散步 + 參觀套票",
                             steps: [
-                                {
-                                    icon: Footprints,
-                                    title: "交通方式",
-                                    desc: "從北野天滿宮步行約 2 分鐘即可抵達主要街道。"
-                                },
-                                {
-                                    icon: Ticket,
-                                    title: "購票資訊",
-                                    desc: "建議購買「套票 (Pass)」較划算。\n推薦：3館券 (風見雞+萌黃+魚鱗) 或 兩館券 (風見雞+萌黃)。\n購票處：各館入口或北野觀光案內所。"
-                                },
-                                {
-                                    icon: Landmark,
-                                    title: "必訪：風見雞之館 (Kazamidori)",
-                                    desc: "紅色磚瓦與屋頂的風見雞是北野的象徵 (國家重要文化財)。"
-                                },
-                                {
-                                    icon: Landmark,
-                                    title: "必訪：萌黃之館 (Moegi)",
-                                    desc: "淡綠色外牆的木造建築，曾是美國總領事官邸。"
-                                },
-                                {
-                                    icon: Landmark,
-                                    title: "必訪：魚鱗之家 (Uroko)",
-                                    desc: "外牆貼滿天然石板像魚鱗一樣，據說摸了會帶來好運。"
-                                }
+                                { icon: "Footprints", title: "交通方式", desc: "從北野天滿宮步行約 2 分鐘即可抵達主要街道。" },
+                                { icon: "Ticket", title: "購票資訊", desc: "建議購買「套票 (Pass)」較划算。\n推薦：3館券 (風見雞+萌黃+魚鱗) 或 兩館券 (風見雞+萌黃)。\n購票處：各館入口或北野觀光案內所。" },
+                                { icon: "Landmark", title: "必訪：風見雞之館 (Kazamidori)", desc: "紅色磚瓦與屋頂的風見雞是北野的象徵 (國家重要文化財)。" },
+                                { icon: "Landmark", title: "必訪：萌黃之館 (Moegi)", desc: "淡綠色外牆的木造建築，曾是美國總領事官邸。" },
+                                { icon: "Landmark", title: "必訪：魚鱗之家 (Uroko)", desc: "外牆貼滿天然石板像魚鱗一樣，據說摸了會帶來好運。" }
                             ]
                         }
                     },
@@ -465,35 +522,35 @@
                         type: 'food', 
                         time: "12:30", 
                         title: "午餐：Kobe IJINKAN-YA", 
-                        desc: "位於北野區域的洋食餐廳。", 
-                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥2,500\n交通方式：位於異人館街區，步行即可抵達\n地址：日本〒650-0002 Hyogo, Kobe, Chuo Ward, Kitanocho, 3 Chome-4-26\n營業時間：10:00-18:00",
+                        desc: "位於北野區域的復古洋食餐廳。", 
+                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥2,500\n📍 地址：神戶市中央區北野町3-4-26\n⏰ 營業時間：10:00-18:00\n💡 特色：推薦漢堡排、蛋包飯。",
                         address: "3 Chome-4-26 Kitanocho, Kobe" 
                     },
                     { 
                         type: 'shopping', 
                         time: "14:30", 
                         title: "Center Plaza (センタープラザ)", 
-                        desc: "神戶的動漫聖地，公仔模型與電玩周邊集中地。", 
-                        subDesc: "地址：1 Chome-9-1 Sannomiyacho, Chuo Ward, Kobe\n營業時間：11:00-19:00\n特色：2-3樓聚集許多動漫迷必逛店舖 (Animate, Lashinbang)", 
+                        desc: "神戶的動漫聖地，公仔模型集中地。", 
+                        subDesc: "📍 地址：三宮町1-9-1 (西館2F/3F)\n⏰ 營業時間：11:00-19:00 (依店家而異)\n🚶 交通：從異人館區步行或搭乘 City Loop 巴士至三宮\n💡 特色：神戶版秋葉原，Animate、Lashinbang 都在這。",
                         tags: ["動漫", "電玩", "御宅聖地"],
                         address: "Center Plaza Kobe" 
                     },
                     { 
                         type: 'shopping', 
                         time: "16:00", 
-                        title: "神戶阪急百貨 (Kobe Hankyu)", 
-                        desc: "購買神戶限定甜點與精緻伴手禮的最佳去處。", 
-                        subDesc: "交通方式：從Center Plaza步行約3分鐘\n地址：8 Chome-1-8 Onoedori, Chuo Ward, Kobe\n營業時間：10:00-20:00\n特色：B1甜點街必逛 (風見雞、小山卷、法蘭酥)",
-                        tags: ["百貨公司", "伴手禮", "甜點"],
+                        title: "神戶阪急百貨", 
+                        desc: "購買神戶限定甜點與伴手禮。", 
+                        subDesc: "📍 地址：小野柄通8-1-8\n⏰ 營業時間：10:00-20:00\n🚶 交通：從Center Plaza步行約3分鐘\n💡 特色：B1 甜點街必逛，集結各大神戶名店。",
+                        tags: ["百貨公司", "伴手禮"],
                         address: "Kobe Hankyu" 
                     },
                     { 
                         type: 'food', 
                         time: "18:00", 
                         title: "晚餐：Kobesteak Propeller", 
-                        desc: "提供高品質神戶牛排與洋食，CP值極高的人氣名店。需預訂。", 
-                        subDesc: "💰 平均預算：約 ¥5,000 ~ ¥6,000\n交通方式：由阪急步行約3分鐘\n地址：8 Chome-1-14 Isogamidori, Chuo Ward, Kobe\n營業時間：11:00-14:30, 17:00-21:00",
-                        tags: ["預約制", "神戶牛", "人氣店"],
+                        desc: "高品質神戶牛排與洋食，CP值高。", 
+                        subDesc: "💰 平均預算：約 ¥3,000 ~ ¥6,000\n📍 地址：磯上通8-1-14\n⏰ 營業時間：11:00-14:30, 17:00-21:00\n🚶 交通：由阪急步行約3分鐘\n💡 特色：不想花大錢吃神戶牛的首選，套餐附餐豐富。",
+                        tags: ["需預訂", "神戶牛", "人氣店"],
                         address: "8 Chome-1-14 Isogamidori, Kobe" 
                     }
                 ]
@@ -507,9 +564,9 @@
                     { 
                         type: 'spot', 
                         time: "09:00", 
-                        title: "生田神社 (Ikuta Shrine)", 
-                        desc: "擁有1800年歷史的古老神社，是神戶地名的由來。", 
-                        subDesc: "交通方式：從蒙特利酒店步行約 3 分鐘\n特色：主祀戀愛與姻緣 (結緣水占卜必玩)",
+                        title: "生田神社", 
+                        desc: "神戶地名的由來，古老神社。", 
+                        subDesc: "📍 地址：下山手通1-2-1\n💡 特色：主祀戀愛與姻緣，水占卜必玩。",
                         tags: ["戀愛結緣", "能量景點"],
                         address: "1 Chome-2-1 Shimoyamatedori, Chuo Ward, Kobe" 
                     },
@@ -517,8 +574,8 @@
                         type: 'food', 
                         time: "10:30", 
                         title: "早午餐：BRISK STAND", 
-                        desc: "IG爆紅的「切對半漢堡」，肉汁飽滿，視覺味覺雙重享受。", 
-                        subDesc: "💰 平均預算：約 ¥1,650 ~ ¥2,500\n交通方式：從生田神社步行約 13 分鐘\n地址：5 Chome-4-8 Motomachidori, Kobe\n營業時間：平日 10:30~16:30 / 週末 10:30~18:30",
+                        desc: "IG爆紅的「切對半漢堡」。", 
+                        subDesc: "💰 平均預算：約 ¥1,500 ~ ¥2,500\n📍 地址：元町通5-4-8\n⏰ 營業時間：平日 10:30~16:30 / 週末 10:30~18:30\n🚶 交通方式：從生田神社步行約 13 分鐘\n💡 特色：先煮後烤的漢堡排，對切斷面秀超吸睛。",
                         tags: ["IG熱門", "漢堡名店"],
                         address: "5 Chome-4-8 Motomachidori, Kobe" 
                     },
@@ -526,22 +583,15 @@
                         type: 'shopping', 
                         time: "12:00", 
                         title: "神戶三田 Premium Outlets", 
-                        desc: "西日本最大級Outlet，仿洛杉磯郊區高級住宅區設計，店舖數超過200家。", 
+                        desc: "西日本最大級Outlet，店舖數超過200家。", 
+                        subDesc: "📍 地址：神戶市北區上津台7-3\n⏰ 營業時間：10:00-20:00\n💡 特色：國際精品、運動品牌齊全，旁邊有 Aeon Mall。",
                         address: "Kobe-Sanda Premium Outlets",
                         detailedGuide: {
                             title: "交通攻略：前往三田 Outlet",
                             strategy: "直達特急巴士 (約 50 分鐘)",
                             steps: [
-                                {
-                                    icon: Footprints,
-                                    title: "Step 1: 步行至神姬巴士總站 (約 10-15 分)",
-                                    desc: "從生田神社沿「生田新道」往東南走，穿過三宮車站。\n🎯 目標：「神姬巴士神戶三宮巴士總站」。\n📍 位置：JR 三宮站東口高架橋下，Mint Kobe (ミント神戸) 一樓旁。\n⚠️ 注意：請認明「神姬巴士 (Shinki Bus)」總站，非一般市營公車。"
-                                },
-                                {
-                                    icon: Ticket,
-                                    title: "Step 2: 購票與搭車",
-                                    desc: "🚌 路線：特急巴士「三宮～三田 Premium Outlets 線」。\n💰 費用：單程約 670 日圓 (可刷 ICOCA/Suica)。\n⏰ 班次：平日 30-60 分一班，首班約 08:30 (週末班次較多)。"
-                                }
+                                { icon: "Footprints", title: "Step 1: 步行至神姬巴士總站", desc: "位置：JR 三宮站東口高架橋下。" },
+                                { icon: "Ticket", title: "Step 2: 購票與搭車", desc: "🚌 路線：特急巴士「三宮～三田 Premium Outlets 線」。\n💰 費用：單程約 670 日圓。" }
                             ]
                         }
                     },
@@ -549,8 +599,8 @@
                         type: 'food', 
                         time: "18:00", 
                         title: "晚餐：Unagi Kikugawa (一本鰻)", 
-                        desc: "來自名古屋的90年老店，現殺現烤，必吃「一本鰻」。", 
-                        subDesc: "💰 平均預算：約 ¥6,000 ~ ¥8,000\n地址：4 Chome-8-17 Kanocho, Chuo Ward, Kobe\n營業時間：12:00-15:00, 17:00-22:00",
+                        desc: "來自名古屋的90年老店，現殺現烤。", 
+                        subDesc: "💰 平均預算：約 ¥4,000 ~ ¥6,000\n📍 地址：加納町4-8-17 (Iconic Kobe 1F)\n⏰ 營業時間：12:00-15:00, 17:00-22:00\n💡 特色：整尾鰻魚不切段直接烤，外皮酥脆肉質軟嫩。",
                         tags: ["米其林推薦", "鰻魚飯"],
                         address: "4 Chome-8-17 Kanocho, Kobe" 
                     }
@@ -569,65 +619,7 @@
             ]
         };
 
-        // --- 5. UI 元件 ---
-
-        // 🔐 密碼鎖元件
-        const PasswordLock = ({ onUnlock }) => {
-            const [input, setInput] = useState('');
-            const [error, setError] = useState(false);
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                // 轉換全形數字為半形，並去除空白
-                const cleanInput = input.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).trim();
-                
-                if (cleanInput === '1115') {
-                    onUnlock();
-                } else {
-                    setError(true);
-                    setInput('');
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 bg-stone-100 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm text-center">
-                        <div className="bg-stone-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Lock className="text-stone-600" size={32} />
-                        </div>
-                        <h2 className="text-2xl font-bold text-stone-800 mb-2">行程已上鎖</h2>
-                        <p className="text-stone-500 text-sm mb-6">請輸入通關密碼以檢視行程</p>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="relative">
-                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
-                                <input 
-                                    type="password" 
-                                    value={input}
-                                    onChange={(e) => {
-                                        setInput(e.target.value);
-                                        setError(false);
-                                    }}
-                                    className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-stone-400 text-center tracking-widest font-bold text-lg"
-                                    placeholder="••••"
-                                    maxLength={4}
-                                    autoFocus
-                                />
-                            </div>
-                            
-                            {error && <p className="text-red-500 text-xs font-bold animate-pulse">密碼錯誤，請再試一次</p>}
-
-                            <button 
-                                type="submit" 
-                                className="w-full bg-stone-800 text-white py-3 rounded-xl font-bold active:scale-95 transition-transform"
-                            >
-                                解鎖
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
+        // --- UI 元件 ---
 
         const Tag = ({ text, color = "bg-orange-100 text-orange-800" }) => (
             <span className={`text-[10px] px-2 py-1 rounded-full mr-1 ${color} font-medium tracking-wide whitespace-nowrap`}>
@@ -642,37 +634,9 @@
                 window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
             };
             return (
-                <button 
-                onClick={handleNav}
-                className={`flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform ${className}`}
-                >
-                <Navigation size={12} />
-                <span>導航</span>
+                <button onClick={handleNav} className={`flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform ${className}`}>
+                    <Navigation size={12} /><span>導航</span>
                 </button>
-            );
-        };
-
-        // --- 新版記帳元件：連結 Google Sheets ---
-        // (此處保留 ExpenseTracker 供未來若需要切換使用，但目前 UI 上已移除入口)
-        const ExpenseTracker = () => {
-            const sheetUrl = "https://docs.google.com/spreadsheets/d/11u1Ufzxnbz_KG4AgN0yU67-DPricKtAo4gycuLyPbqA/edit?gid=0#gid=0"; 
-            return (
-                <div className="animate-fade-in p-4 bg-stone-50 min-h-[60vh] flex flex-col items-center pt-10">
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100 w-full max-w-sm text-center">
-                        <div className="bg-green-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <FileSpreadsheet className="text-green-600" size={40} />
-                        </div>
-                        <h2 className="text-2xl font-bold text-stone-800 mb-2">旅費預算表</h2>
-                        <p className="text-stone-500 text-sm mb-8 leading-relaxed">
-                            為了方便多人協作與即時統計，<br/>
-                            我們使用 Google Sheets 來管理記帳。
-                        </p>
-                        <a href={sheetUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 bg-stone-800 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg shadow-stone-200 active:scale-95 transition-all hover:bg-stone-700">
-                            <ExternalLink size={20} />
-                            <span>開啟記帳表單</span>
-                        </a>
-                    </div>
-                </div>
             );
         };
 
@@ -696,24 +660,193 @@
             </div>
         );
 
-        // 交通攻略卡片元件
+        // 記帳元件 - 支援本地儲存 fallback
+        const AccountingTab = ({ db, isOfflineMode }) => {
+            const [items, setItems] = useState([]);
+            const [newItem, setNewItem] = useState({ name: '', price: '', payer: '公費' });
+            const [loading, setLoading] = useState(false);
+            const [errorMsg, setErrorMsg] = useState(null);
+
+            useEffect(() => {
+                if (isOfflineMode) {
+                    // 離線模式：讀取 Local Storage
+                    try {
+                        const localData = localStorage.getItem('expenses');
+                        if (localData) {
+                            setItems(JSON.parse(localData));
+                        }
+                    } catch (e) {
+                        console.error("Local storage read error", e);
+                    }
+                    return;
+                }
+
+                if (!db) {
+                    setErrorMsg("無法連接資料庫，請檢查設定。");
+                    return;
+                }
+                
+                try {
+                    const q = query(collection(db, "expenses"), orderBy("timestamp", "desc"));
+                    const unsubscribe = onSnapshot(q, (snapshot) => {
+                        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        setItems(data);
+                    }, (error) => {
+                        console.error("Firestore snapshot error:", error);
+                        // 如果在監聽時斷線，也切換顯示本地資料 (唯讀) 或提示錯誤
+                        setErrorMsg("讀取雲端資料失敗：" + error.message);
+                    });
+                    return () => unsubscribe();
+                } catch (err) {
+                    console.error("Error setting up listener:", err);
+                }
+            }, [db, isOfflineMode]);
+
+            const handleAdd = async (e) => {
+                e.preventDefault();
+                if (!newItem.name || !newItem.price) return;
+                setLoading(true);
+
+                const newExpense = {
+                    ...newItem,
+                    price: Number(newItem.price),
+                    timestamp: isOfflineMode ? new Date().toISOString() : serverTimestamp()
+                };
+
+                try {
+                    if (isOfflineMode) {
+                        // 離線模式：寫入 Local Storage
+                        const newItems = [{ id: Date.now().toString(), ...newExpense }, ...items];
+                        setItems(newItems);
+                        localStorage.setItem('expenses', JSON.stringify(newItems));
+                    } else {
+                        // 線上模式：寫入 Firebase
+                        await addDoc(collection(db, "expenses"), newExpense);
+                    }
+                    setNewItem({ name: '', price: '', payer: '公費' });
+                } catch (error) {
+                    console.error("新增失敗: " + error.message);
+                    alert("新增失敗: " + error.message);
+                }
+                setLoading(false);
+            };
+
+            const handleDelete = async (id) => {
+                // 移除 confirm 避免 UI 阻擋
+                try {
+                    if (isOfflineMode) {
+                        // 離線模式：刪除 Local Storage
+                        const newItems = items.filter(item => item.id !== id);
+                        setItems(newItems);
+                        localStorage.setItem('expenses', JSON.stringify(newItems));
+                    } else {
+                        // 線上模式：刪除 Firebase
+                        await deleteDoc(doc(db, "expenses", id));
+                    }
+                } catch (e) {
+                    console.error("刪除失敗", e);
+                }
+            };
+
+            const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+
+            if (errorMsg && !isOfflineMode) {
+                return (
+                    <div className="pt-10 px-6 text-center">
+                        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200">
+                            <AlertTriangle className="mx-auto mb-2" />
+                            <p className="font-bold mb-2">無法使用記帳功能</p>
+                            <p className="text-sm">{errorMsg}</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="pt-4 pb-20 animate-fade-in">
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-100 mb-6">
+                        <div className="text-center mb-6">
+                            <h2 className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-1">總支出 (日圓)</h2>
+                            <div className="text-4xl font-bold text-stone-800">¥ {total.toLocaleString()}</div>
+                            {isOfflineMode && <div className="text-xs text-amber-600 mt-1 flex items-center justify-center gap-1"><Save size={12}/> 資料儲存於本機</div>}
+                        </div>
+
+                        <form onSubmit={handleAdd} className="space-y-3">
+                            <input 
+                                type="text" 
+                                placeholder="項目名稱 (例如: 章魚燒)" 
+                                value={newItem.name}
+                                onChange={e => setNewItem({...newItem, name: e.target.value})}
+                                className="w-full p-3 bg-stone-50 rounded-xl border border-stone-200 focus:border-stone-400 outline-none text-sm"
+                            />
+                            <div className="flex gap-2">
+                                <input 
+                                    type="number" 
+                                    placeholder="金額" 
+                                    value={newItem.price}
+                                    onChange={e => setNewItem({...newItem, price: e.target.value})}
+                                    className="w-2/3 p-3 bg-stone-50 rounded-xl border border-stone-200 focus:border-stone-400 outline-none text-sm"
+                                />
+                                <select 
+                                    value={newItem.payer}
+                                    onChange={e => setNewItem({...newItem, payer: e.target.value})}
+                                    className="w-1/3 p-3 bg-stone-50 rounded-xl border border-stone-200 text-sm"
+                                >
+                                    <option>公費</option>
+                                    <option>個人</option>
+                                </select>
+                            </div>
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="w-full bg-stone-800 text-white py-3 rounded-xl font-bold active:scale-95 transition-transform flex justify-center items-center gap-2"
+                            >
+                                {loading ? <div className="loader w-4 h-4 border-white border-t-transparent"></div> : <Plus size={18} />}
+                                新增紀錄
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="space-y-3">
+                        {items.map(item => (
+                            <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex justify-between items-center">
+                                <div>
+                                    <div className="font-bold text-stone-800">{item.name}</div>
+                                    <div className="text-xs text-stone-400">{item.payer} • {isOfflineMode ? new Date(item.timestamp).toLocaleDateString() : item.timestamp?.toDate().toLocaleDateString()}</div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="font-mono font-bold text-stone-700">¥{item.price.toLocaleString()}</span>
+                                    <button onClick={() => handleDelete(item.id)} className="text-stone-300 hover:text-red-500">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {items.length === 0 && (
+                            <div className="text-center text-stone-400 text-sm py-10">
+                                尚未有記帳紀錄
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // 交通卡片元件
         const TransportGuideCard = ({ guide, isEmbedded = false }) => (
             <div className={`bg-white rounded-2xl overflow-hidden ${isEmbedded ? 'mt-4 border border-stone-200 shadow-sm' : 'shadow-sm border border-stone-100 mb-6'}`}>
                 <div className="bg-stone-800 p-4 text-white">
                     <h3 className="font-bold text-base md:text-lg">{guide.title || "移動攻略"}</h3>
                     <div className="flex items-center gap-1 text-stone-300 text-xs mt-1">
-                        <Train size={14} />
-                        <span>{guide.strategy}</span>
+                        <Train size={14} /><span>{guide.strategy}</span>
                     </div>
                 </div>
                 <div className="p-4 space-y-4 bg-stone-50/50">
                     {guide.steps.map((step, idx) => {
-                        const StepIcon = step.icon;
+                        const StepIcon = getIcon(step.icon); // 使用 getIcon 函式
                         return (
                             <div key={idx} className="flex gap-4 items-start relative pb-4 last:pb-0">
-                                {idx !== guide.steps.length - 1 && (
-                                    <div className="absolute left-[19px] top-8 bottom-0 w-0.5 bg-stone-200"></div>
-                                )}
+                                {idx !== guide.steps.length - 1 && <div className="absolute left-[19px] top-8 bottom-0 w-0.5 bg-stone-200"></div>}
                                 <div className="z-10 bg-indigo-50 text-indigo-600 p-2 rounded-full shrink-0 border-2 border-white shadow-sm">
                                     <StepIcon size={16} />
                                 </div>
@@ -728,559 +861,609 @@
             </div>
         );
 
-        const DayCard = ({ dayData, isExpanded, onToggle }) => {
-            return (
-                <div className="mb-4 rounded-3xl overflow-hidden bg-white shadow-sm border border-stone-100 transition-all duration-300">
-                <div 
-                    onClick={onToggle}
-                    className={`p-5 flex items-center justify-between cursor-pointer active:bg-stone-50 ${isExpanded ? 'bg-stone-800 text-white' : 'bg-white text-stone-800'}`}
-                >
+        // Day Card
+        const DayCard = ({ dayData, isExpanded, onToggle }) => (
+            <div className="mb-4 rounded-3xl overflow-hidden bg-white shadow-sm border border-stone-100 transition-all duration-300">
+                <div onClick={onToggle} className={`p-5 flex items-center justify-between cursor-pointer active:bg-stone-50 ${isExpanded ? 'bg-stone-800 text-white' : 'bg-white text-stone-800'}`}>
                     <div>
-                    <div className={`text-xs font-bold tracking-widest uppercase mb-1 ${isExpanded ? 'text-stone-400' : 'text-stone-400'}`}>
-                        DAY {dayData.day}
-                    </div>
-                    <h2 className="text-xl font-bold">{dayData.date}</h2>
+                        <div className={`text-xs font-bold tracking-widest uppercase mb-1 text-stone-400`}>DAY {dayData.day}</div>
+                        <h2 className="text-xl font-bold">{dayData.date}</h2>
                     </div>
                     <div className="flex items-center gap-3">
-                    <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isExpanded ? 'bg-stone-700 text-stone-200' : 'bg-stone-100 text-stone-600'}`}>
-                        <CloudSun size={14} />
-                        {dayData.weather}
-                    </div>
-                    {isExpanded ? <ChevronUp /> : <ChevronDown />}
+                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isExpanded ? 'bg-stone-700 text-stone-200' : 'bg-stone-100 text-stone-600'}`}>
+                            <CloudSun size={14} />{dayData.weather}
+                        </div>
+                        {isExpanded ? <ChevronUp /> : <ChevronDown />}
                     </div>
                 </div>
-
                 {isExpanded && (
                     <div className="p-4 bg-stone-50 space-y-4">
-                    {dayData.events.map((event, idx) => {
-                        let Icon = MapPin;
-                        let themeClass = "border-l-4 border-stone-300";
-                        if (event.type === 'food') { Icon = Utensils; themeClass = "border-l-4 border-orange-300"; }
-                        if (event.type === 'transport') { Icon = Train; themeClass = "border-l-4 border-blue-300"; }
-                        if (event.type === 'shopping') { Icon = ShoppingBag; themeClass = "border-l-4 border-pink-300"; }
-                        if (event.type === 'flight') { Icon = Plane; themeClass = "border-l-4 border-sky-300"; }
-                        if (event.type === 'hotel') { Icon = BedDouble; themeClass = "border-l-4 border-indigo-300"; }
-                        if (event.icon) { Icon = event.icon; }
-
-                        return (
-                        <div key={idx} className={`bg-white p-4 rounded-xl shadow-sm ${themeClass} relative group`}>
-                            <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2 text-stone-500 text-xs font-mono">
-                                <Icon size={14} />
-                                <span>{event.time}</span>
-                            </div>
-                            {event.address && <NavButton address={event.address} />}
-                            </div>
-                            <h3 className="font-bold text-stone-800 text-lg mb-1">{event.title}</h3>
+                        {dayData.events.map((event, idx) => {
+                            let Icon = MapPin;
+                            let themeClass = "border-l-4 border-stone-300";
+                            if (event.type === 'food') { Icon = Utensils; themeClass = "border-l-4 border-orange-300"; }
+                            if (event.type === 'transport') { Icon = Train; themeClass = "border-l-4 border-blue-300"; }
+                            if (event.type === 'shopping') { Icon = ShoppingBag; themeClass = "border-l-4 border-pink-300"; }
+                            if (event.type === 'flight') { Icon = Plane; themeClass = "border-l-4 border-sky-300"; }
+                            if (event.type === 'hotel') { Icon = BedDouble; themeClass = "border-l-4 border-indigo-300"; }
+                            if (event.type === 'spot') { Icon = Camera; }
                             
-                            <div className="flex flex-wrap gap-2 mb-2">
-                            {event.tags?.map(t => (
-                                <Tag key={t} text={t} color={t.includes("必") ? "bg-red-100 text-red-800" : "bg-stone-100 text-stone-600"} />
-                            ))}
-                            </div>
-
-                            <p className="text-stone-600 text-sm whitespace-pre-line leading-relaxed">
-                            {event.desc}
-                            </p>
-
-                            {event.subDesc && (
-                                <div className="mt-2 text-xs text-stone-500 whitespace-pre-line leading-relaxed bg-stone-50 p-2 rounded border border-stone-100">
-                                    {event.subDesc}
-                                </div>
-                            )}
-
-                            {event.attractions && (
-                                <div className="mt-4 grid gap-2">
-                                    {event.attractions.map((attr, i) => (
-                                        <div key={i} className="flex gap-2 items-start bg-stone-50 p-2 rounded-lg border border-stone-100">
-                                            <span className="shrink-0 bg-stone-200 text-stone-700 text-[10px] px-2 py-0.5 rounded font-bold">
-                                                {attr.label}
-                                            </span>
-                                            <span className="text-xs text-stone-700 whitespace-pre-line">{attr.text}</span>
+                            // 🔥 修正：從字串名稱載入對應圖示
+                            if (event.icon) { 
+                                Icon = getIcon(event.icon); 
+                            }
+                            
+                            return (
+                                <div key={idx} className={`bg-white p-4 rounded-xl shadow-sm ${themeClass} relative group`}>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2 text-stone-500 text-xs font-mono">
+                                            <Icon size={14} /><span>{event.time}</span>
                                         </div>
-                                    ))}
+                                        {event.address && <NavButton address={event.address} />}
+                                    </div>
+                                    <h3 className="font-bold text-stone-800 text-lg mb-1">{event.title}</h3>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {event.tags?.map(t => <Tag key={t} text={t} color={t.includes("必") ? "bg-red-100 text-red-800" : "bg-stone-100 text-stone-600"} />)}
+                                    </div>
+                                    <p className="text-stone-600 text-sm whitespace-pre-line leading-relaxed">{event.desc}</p>
+                                    {event.subDesc && <div className="mt-2 text-xs text-stone-500 whitespace-pre-line bg-stone-50 p-2 rounded border border-stone-100">{event.subDesc}</div>}
+                                    {event.attractions && (
+                                        <div className="mt-4 grid gap-2">
+                                            {event.attractions.map((attr, i) => (
+                                                <div key={i} className="flex gap-2 items-start bg-stone-50 p-2 rounded-lg border border-stone-100">
+                                                    <span className="shrink-0 bg-stone-200 text-stone-700 text-[10px] px-2 py-0.5 rounded font-bold">{attr.label}</span>
+                                                    <span className="text-xs text-stone-700 whitespace-pre-line">{attr.text}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {event.detailedGuide && <TransportGuideCard guide={event.detailedGuide} isEmbedded={true} />}
+                                    {event.isImportant && (
+                                        <div className="mt-3 bg-amber-50 p-3 rounded-lg border border-amber-100 flex gap-2">
+                                            <Info className="text-amber-500 shrink-0" size={16} />
+                                            <span className="text-xs text-amber-800 font-medium">請特別注意此段交通指示</span>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-
-                            {event.detailedGuide && (
-                                <TransportGuideCard guide={event.detailedGuide} isEmbedded={true} />
-                            )}
-
-                            {event.isImportant && (
-                            <div className="mt-3 bg-amber-50 p-3 rounded-lg border border-amber-100 flex gap-2">
-                                <Info className="text-amber-500 shrink-0" size={16} />
-                                <span className="text-xs text-amber-800 font-medium">請特別注意此段交通指示</span>
-                            </div>
-                            )}
-                        </div>
-                        );
-                    })}
+                            );
+                        })}
                     </div>
                 )}
-                </div>
-            );
-        };
+            </div>
+        );
 
-        // --- 6. Main App Container ---
-
+        // 主程式
         const App = () => {
+            const [tripData, setTripData] = useState(null);
             const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [password, setPassword] = useState('');
+            const [authError, setAuthError] = useState(false);
             const [activeTab, setActiveTab] = useState('itinerary');
             const [expandedDay, setExpandedDay] = useState(1);
+            const [isUploading, setIsUploading] = useState(false);
+            const [dbError, setDbError] = useState(null); // 新增：資料庫錯誤狀態
+            const [isLoading, setIsLoading] = useState(false);
 
+            // 檢查 Session
             useEffect(() => {
-                // 改用 sessionStorage，這樣關閉分頁後就會重新上鎖
                 const unlocked = sessionStorage.getItem('trip_unlocked_secure');
-                if (unlocked === 'true') {
-                    setIsAuthenticated(true);
-                }
+                if (unlocked === 'true') setIsAuthenticated(true);
             }, []);
 
-            const handleUnlock = () => {
-                setIsAuthenticated(true);
-                // 設定本次連線階段為已解鎖
-                sessionStorage.setItem('trip_unlocked_secure', 'true');
+            // 讀取 Firebase 資料
+            useEffect(() => {
+                if (!isAuthenticated || !db) return;
+
+                const fetchTripData = async () => {
+                    setIsLoading(true);
+                    try {
+                        // 🔥 這裡改用 v2 版本，強制使用新資料庫文件，避免舊資料干擾
+                        const docRef = doc(db, "trips", "japan2026_v2");
+                        const docSnap = await getDoc(docRef);
+
+                        if (docSnap.exists()) {
+                            setTripData(docSnap.data());
+                            setDbError(null);
+                        } else {
+                            console.log("No such document! Using default data locally.");
+                            // 🔥 修正：找不到雲端資料時，直接載入預設值，不卡在初始化畫面
+                            setTripData(DEFAULT_TRIP_DATA);
+                            setDbError(null);
+                        }
+                    } catch (error) {
+                        console.error("Error fetching trip data:", error);
+                        // 🔥 錯誤捕捉與提示 🔥
+                        if (error.code === 'permission-denied' || error.message.includes('Cloud Firestore API') || error.message.includes('offline') || error.message.includes('Could not reach')) {
+                            // 在長輪詢模式下，如果是單純的 offline 錯誤，通常是短暫網路問題，不需顯示巨大錯誤
+                            if (error.message.includes('offline') || error.message.includes('Could not reach')) {
+                                console.warn("Network appears to be offline, using default data.");
+                                // 只在真的是離線錯誤時，清除錯誤訊息以顯示內容，但可選擇顯示小提示
+                                setDbError(null); 
+                            } else {
+                                setDbError("資料庫尚未建立或連線失敗，目前顯示預設資料。");
+                            }
+                        } else {
+                            setDbError("讀取失敗：" + error.message);
+                        }
+                        // 如果讀取失敗，直接使用本地資料，確保行程可見
+                        setTripData(DEFAULT_TRIP_DATA);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+
+                fetchTripData();
+            }, [isAuthenticated]);
+
+            const handleUnlock = (e) => {
+                e.preventDefault();
+                // 再次確保驗證時清除雜訊
+                const cleanInput = password.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).trim();
+                
+                if (cleanInput === '1115') {
+                    setIsAuthenticated(true);
+                    sessionStorage.setItem('trip_unlocked_secure', 'true');
+                } else {
+                    setAuthError(true);
+                    setPassword('');
+                }
             };
 
+            const uploadDefaultData = async () => {
+                if (!db) {
+                    setDbError("Firebase 尚未設定！請檢查程式碼中的設定");
+                    return;
+                }
+                
+                setIsUploading(true);
+                setDbError(null); // 清除錯誤
+                
+                try {
+                    await setDoc(doc(db, "trips", "japan2026_v2"), DEFAULT_TRIP_DATA);
+                    setTripData(DEFAULT_TRIP_DATA);
+                    setDbError(null);
+                } catch (e) {
+                    console.error("Full error:", e);
+                    let msg = e.message;
+                    if (e.code) msg = `Code: ${e.code} - ${msg}`;
+                    
+                    if (msg.includes('permission-denied')) {
+                        setDbError("權限被拒 (Permission Denied)：\n請檢查 Firestore 是否已建立，並且規則設為測試模式 (allow read, write: if true;)");
+                    } else if (msg.includes('not found') || msg.includes('API')) {
+                        setDbError("找不到資料庫 (Not Found)：\n請務必去 Firebase Console -> Build -> Firestore Database 按下「建立資料庫」！");
+                    } else if (msg.includes('offline')) {
+                         setDbError("離線狀態：無法上傳資料，請檢查網路連線。");
+                    } else {
+                        setDbError("上傳發生未預期錯誤：\n" + msg);
+                    }
+                }
+                setIsUploading(false);
+            };
+
+            // 尚未解鎖畫面
             if (!isAuthenticated) {
-                return <PasswordLock onUnlock={handleUnlock} />;
+                return (
+                    <div className="fixed inset-0 bg-stone-100 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm text-center">
+                            <div className="bg-stone-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Lock className="text-stone-600" size={32} />
+                            </div>
+                            <h2 className="text-2xl font-bold text-stone-800 mb-2">行程已上鎖</h2>
+                            <p className="text-stone-500 text-sm mb-6">請輸入 4 位數通關密碼</p>
+                            <form onSubmit={handleUnlock} className="space-y-4">
+                                <div className="relative">
+                                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                                    <input 
+                                        type="password" 
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        autoComplete="off"
+                                        value={password} 
+                                        onChange={(e) => { 
+                                            // 🔥 修正：僅設定狀態，不做即時字元替換，避免重複輸入問題
+                                            setPassword(e.target.value); 
+                                            setAuthError(false); 
+                                        }} 
+                                        className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-stone-400 text-center tracking-widest font-bold text-lg" 
+                                        placeholder="••••" 
+                                        maxLength={4} 
+                                        autoFocus 
+                                    />
+                                </div>
+                                {authError && <p className="text-red-500 text-xs font-bold animate-pulse">密碼錯誤</p>}
+                                <button type="submit" className="w-full bg-stone-800 text-white py-3 rounded-xl font-bold active:scale-95 transition-transform">解鎖</button>
+                            </form>
+                            {!isFirebaseReady && <p className="mt-4 text-xs text-red-500">⚠️ Firebase 尚未設定，請修改程式碼貼上 Config</p>}
+                        </div>
+                    </div>
+                );
             }
+
+            // 載入中畫面
+            if (isLoading && !tripData) {
+                return (
+                    <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center p-6 text-center">
+                        <div className="loader mb-4"></div>
+                        <p className="text-stone-500 text-sm">資料讀取中，請稍候...</p>
+                    </div>
+                );
+            }
+
+            // 萬一 Firebase 設定壞了，給一個 fallback
+            const displayData = tripData || DEFAULT_TRIP_DATA;
+            const isOfflineMode = dbError === null && tripData === DEFAULT_TRIP_DATA;
 
             return (
                 <div className="min-h-screen bg-stone-100 font-sans text-stone-900 pb-24 max-w-md mx-auto shadow-2xl overflow-hidden relative">
-                
-                {/* Header */}
-                <header className="bg-stone-800 text-white p-6 pt-12 rounded-b-[2rem] shadow-lg relative z-10">
-                    <div className="flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-light tracking-tight mb-1">大阪神戶寒假行</h1>
-                        <p className="text-stone-400 text-xs tracking-widest">2026.01.11 - 01.18</p>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-4xl font-thin">{TRIP_DATA.itinerary[0].weather.split(' ')[1]}</div>
-                        <div className="text-xs text-stone-400">大阪目前預報</div>
-                    </div>
-                    </div>
-                </header>
-
-                {/* Content Area */}
-                <main className="p-4 -mt-4 relative z-0">
                     
-                    {activeTab === 'itinerary' && (
-                    <div className="animate-fade-in pb-10">
-                        {TRIP_DATA.itinerary.map((day) => (
-                        <DayCard 
-                            key={day.day} 
-                            dayData={day} 
-                            isExpanded={expandedDay === day.day}
-                            onToggle={() => setExpandedDay(day.day === expandedDay ? null : day.day)}
-                        />
-                        ))}
-                    </div>
+                    {/* 🔥 全局錯誤提示 🔥 */}
+                    {dbError && (
+                        <div className="bg-red-600 text-white px-4 py-3 text-center text-sm font-bold sticky top-0 z-[60] shadow-md flex items-center justify-center gap-2 whitespace-pre-wrap">
+                            <AlertTriangle size={18} className="shrink-0" />
+                            <span>{dbError}</span>
+                        </div>
+                    )}
+                    
+                    {/* 離線模式提示 */}
+                    {isOfflineMode && (
+                         <div className="bg-amber-100 text-amber-800 px-4 py-2 text-center text-xs font-bold sticky top-0 z-[60] flex items-center justify-center gap-2">
+                            <WifiOff size={14} />
+                            <span>目前為離線預覽模式 (無法儲存資料到雲端，但可記帳於本機)</span>
+                        </div>
                     )}
 
-                    {activeTab === 'info' && (
-                    <div className="animate-fade-in pt-4 pb-10">
-                        
-                        {/* 🔥 新增：神戶臨海樂園 景點攻略 🔥 */}
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">神戶臨海樂園 景點攻略</h2>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                            
-                            {/* 1. 購物中心 (umie & Mosaic) */}
+                    {/* Header */}
+                    <header className="bg-stone-800 text-white p-6 pt-12 rounded-b-[2rem] shadow-lg relative z-10">
+                        <div className="flex justify-between items-end">
                             <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-indigo-400 pl-2">購物中心</h4>
-                                <div className="space-y-3">
-                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                                        <div className="flex justify-between items-baseline mb-2">
-                                            <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
-                                                <ShoppingBag size={14}/> umie (北館/南館)
-                                            </span>
-                                            <span className="text-[10px] text-stone-400">空橋相通</span>
+                                <h1 className="text-3xl font-light tracking-tight mb-1">大阪神戶寒假行</h1>
+                                <p className="text-stone-400 text-xs tracking-widest">2026.01.11 - 01.18</p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-4xl font-thin">{displayData.itinerary[0]?.weather?.split(' ')[1] || "8°C"}</div>
+                                <div className="text-xs text-stone-400">大阪目前預報</div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Content */}
+                    <main className="p-4 -mt-4 relative z-0">
+                        {activeTab === 'itinerary' && (
+                            <div className="animate-fade-in pb-10">
+                                {displayData.itinerary.map((day) => (
+                                    <DayCard key={day.day} dayData={day} isExpanded={expandedDay === day.day} onToggle={() => setExpandedDay(day.day === expandedDay ? null : day.day)} />
+                                ))}
+                                {/* 資料重置按鈕 (開發用) */}
+                                <div className="mt-8 text-center">
+                                    <button onClick={uploadDefaultData} className="text-xs text-stone-400 underline hover:text-stone-600 flex items-center justify-center gap-1 mx-auto">
+                                        <RefreshCw size={10} /> 重置雲端行程資料
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'accounting' && <AccountingTab db={db} isOfflineMode={isOfflineMode} />}
+
+                        {activeTab === 'info' && (
+                            <div className="animate-fade-in pt-4 pb-10">
+                                
+                                {/* 🔥 還原：大阪必買伴手禮 (完整版) 🔥 */}
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買伴手禮</h2>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                                    <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-orange-800 text-sm">1. 長崎堂長崎蛋糕</span>
+                                            <span className="text-[10px] text-stone-400">10:00–17:30 (二三休)</span>
                                         </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed mb-2">集合服飾、雜貨與大型專賣店的綜合商場。</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            {["Uniqlo", "GU", "ZARA", "H&M", "GAP", "無印良品", "ABC-MART", "Francfranc", "Kojima x Bic Camera", "3COINS", "Seria"].map(brand => (
-                                                <span key={brand} className="text-[10px] bg-white border border-stone-200 px-1.5 py-0.5 rounded text-stone-500">{brand}</span>
+                                        <div className="text-[10px] text-stone-500 mb-1">大阪市中央區心齋橋筋2-1-29</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">創立100週年以上！大阪府認證的「大阪產品」，必買經典蜂蜜蛋糕。</p>
+                                    </div>
+                                    <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-orange-800 text-sm">2. 阿彌陀池大黑 (難波Walk)</span>
+                                            <span className="text-[10px] text-stone-400">10:00–21:00</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-500 mb-1">大阪市中央區難波2-1-13</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">特色「栗米香」酥脆香甜，「岩米香」帶有生薑辛辣與黑糖甜味，口感硬脆。</p>
+                                    </div>
+                                    <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-orange-800 text-sm">3. 食倒太郎布丁</span>
+                                            <span className="text-[10px] text-stone-400">09:30–21:30</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-500 mb-1">大阪市中央區道頓堀1-8-25</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">大阪招牌人物「食倒太郎」，萌翻天的小丑帽包裝，內含甜滋滋焦糖布丁。</p>
+                                    </div>
+                                    <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-orange-800 text-sm">4. 千鳥屋宗家</span>
+                                            <span className="text-[10px] text-stone-400">08:30–20:00 (日休)</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-500 mb-1">大阪市中央區本町3-4-12</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">創業395年，必買「みたらし小餅」，米香濃厚爆漿鹹甜醬汁 (保存期限僅3天)。</p>
+                                    </div>
+                                    <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-orange-800 text-sm">5. UHA味覺糖 Cororo</span>
+                                            <span className="text-[10px] text-stone-400">11:00–20:00 (週末10:00~)</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-500 mb-1">大阪市北區角田町8−7 (阪急梅田B1F)</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">高級版Cororo，尺寸放大1.5倍，果汁含量更高。推薦巨峰葡萄、麝香葡萄口味。</p>
+                                    </div>
+                                </div>
+
+                                {/* 🔥 補回：大阪必買藥妝 & 電器 🔥 */}
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買藥妝 & 電器</h2>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                                    <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-blue-800 text-sm">1. 驚安殿堂唐吉軻德 (道頓堀)</span>
+                                            <span className="text-[10px] text-stone-400">24H 營業</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-500 mb-1">7-13 Souemoncho, Chuo Ward, Osaka</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">商品種類最齊全，24小時營業隨時可逛，藥妝零食電器一站購足。</p>
+                                    </div>
+                                    <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="font-bold text-blue-800 text-sm">2. Bic Camera 難波店</span>
+                                            <span className="text-[10px] text-stone-400">10:00-22:00</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-500 mb-1">2 Chome-10-1 Sennichimae, Chuo Ward, Osaka</div>
+                                        <p className="text-xs text-stone-600 leading-relaxed">大型電器連鎖店，各類家電、美容儀器、遊戲主機應有盡有。</p>
+                                    </div>
+                                </div>
+
+                                {/* 🔥 還原：黑門市場 (完整版) 🔥 */}
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">黑門市場 美食攻略</h2>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                                    <div className="flex gap-4 items-start mb-4">
+                                        <div className="bg-red-50 p-3 rounded-xl shrink-0 border border-red-100">
+                                            <Store className="text-red-600" size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-lg text-stone-800">黑門市場</h3>
+                                            <p className="text-xs text-stone-500 mt-1">大阪市中央區日本橋2-4-1</p>
+                                            <div className="flex gap-2 mt-2">
+                                                <span className="bg-stone-100 text-stone-600 text-[10px] px-2 py-1 rounded">距飯店步行 5 分</span>
+                                                <span className="bg-stone-100 text-stone-600 text-[10px] px-2 py-1 rounded">08:00-17:00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr className="border-stone-100" />
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-orange-400 pl-2">必吃早餐 & 小吃</h4>
+                                        <div className="space-y-3">
+                                            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100"><span className="font-bold text-stone-800 text-sm">1. 高橋食品豆漿</span> <p className="text-xs text-stone-500 mt-1">關西第一名豆漿，99年老店，早餐首選。</p></div>
+                                            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100"><span className="font-bold text-stone-800 text-sm">2. 石橋食品關東煮</span> <p className="text-xs text-stone-500 mt-1">古法烹調，湯頭鮮美，蘿蔔入味。</p></div>
+                                            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100"><span className="font-bold text-stone-800 text-sm">3. まぐろや黒銀鮪魚</span> <p className="text-xs text-stone-500 mt-1">必點「黑鮪魚前腹肉」，入口即化。</p></div>
+                                            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100"><span className="font-bold text-stone-800 text-sm">4. 魚福烤扇貝</span> <p className="text-xs text-stone-500 mt-1">奶油烤扇貝必吃！還有現剝海膽。</p></div>
+                                            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100"><span className="font-bold text-stone-800 text-sm">5. 西川鮮魚店</span> <p className="text-xs text-stone-500 mt-1">每日新鮮進貨的現剖海膽和生蠔。</p></div>
+                                            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100"><span className="font-bold text-stone-800 text-sm">6. 三都屋草莓大福</span> <p className="text-xs text-stone-500 mt-1">70年老店，還有麝香葡萄口味與蕨餅。</p></div>
+                                        </div>
+                                    </div>
+                                    <hr className="border-stone-100" />
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">藥妝 & 必買</h4>
+                                        <div className="space-y-3">
+                                            <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
+                                                <span className="font-bold text-pink-800 text-sm">1. OS Drug</span>
+                                                <p className="text-xs text-stone-600 leading-relaxed mt-1">價格極具競爭力！<span className="font-bold text-red-500">注意：不退稅、不刷卡 (僅收現金)</span>。</p>
+                                            </div>
+                                            <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
+                                                <span className="font-bold text-pink-800 text-sm">2. 黑門中川超市</span>
+                                                <p className="text-xs text-stone-600 leading-relaxed mt-1">24H 營業，生鮮蔬果、零食補貨好去處。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 🔥 還原：神戶臨海樂園 (最完整詳細版) 🔥 */}
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">神戶臨海樂園 景點攻略</h2>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                                    
+                                    {/* 1. 購物中心 (umie & Mosaic) */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-indigo-400 pl-2">購物中心</h4>
+                                        <div className="space-y-3">
+                                            <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                                <div className="flex justify-between items-baseline mb-2">
+                                                    <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
+                                                        <ShoppingBag size={14}/> umie (北館/南館)
+                                                    </span>
+                                                    <span className="text-[10px] text-stone-400">空橋相通</span>
+                                                </div>
+                                                <p className="text-xs text-stone-600 leading-relaxed mb-2">集合服飾、雜貨與大型專賣店的綜合商場。</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {["Uniqlo", "GU", "ZARA", "H&M", "GAP", "無印良品", "ABC-MART", "Francfranc", "Kojima x Bic Camera", "3COINS", "Seria"].map(brand => (
+                                                        <span key={brand} className="text-[10px] bg-white border border-stone-200 px-1.5 py-0.5 rounded text-stone-500">{brand}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                                <div className="flex justify-between items-baseline mb-2">
+                                                    <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
+                                                        <Store size={14}/> Mosaic 馬賽克廣場
+                                                    </span>
+                                                    <span className="text-[10px] text-stone-400">10:00-22:00</span>
+                                                </div>
+                                                <p className="text-xs text-stone-600 leading-relaxed">開放式歐風商場，特色小店與海景餐廳林立，還有麵包超人博物館。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr className="border-stone-100" />
+
+                                    {/* 2. 必遊景點 (摩天輪 & 美利堅公園) */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-sky-400 pl-2">必遊景點</h4>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <FerrisWheel size={14} className="text-sky-600"/>
+                                                    <span className="font-bold text-stone-800 text-xs">馬賽克大摩天輪</span>
+                                                </div>
+                                                <p className="text-[10px] text-stone-500 mb-1">賞神戶夜景絕佳位置</p>
+                                                <div className="text-[10px] text-stone-400 font-mono">
+                                                    ¥800/人<br/>10:00-22:00
+                                                </div>
+                                            </div>
+                                            <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Trees size={14} className="text-sky-600"/>
+                                                    <span className="font-bold text-stone-800 text-xs">美利堅公園</span>
+                                                </div>
+                                                <p className="text-[10px] text-stone-500 mb-1">BE KOBE 打卡地標</p>
+                                                <div className="text-[10px] text-stone-400">
+                                                    海洋博物館<br/>面海星巴克
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr className="border-stone-100" />
+
+                                    {/* 3. 卡通 & IP 專賣店 */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">卡通 & IP 專賣店</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {[
+                                                {name: "麵包超人博物館", note: "1F 免費商場"},
+                                                {name: "吉卜力共和國", note: "龍貓周邊"},
+                                                {name: "史努比專賣店", note: "Snoopy Town"},
+                                                {name: "KIDDY LAND", note: "綜合IP (卡比/米菲)"},
+                                                {name: "三麗鷗神戶店", note: "Hello Kitty"},
+                                                {name: "奧特曼世界M78", note: "鹹蛋超人"},
+                                                {name: "Disney Avenue", note: "迪士尼周邊"},
+                                                {name: "拉拉熊 & 角落生物", note: "Rilakkuma Store"}
+                                            ].map((shop, i) => (
+                                                <div key={i} className="bg-pink-50/30 p-2 rounded-lg border border-pink-100 flex flex-col justify-center">
+                                                    <span className="text-xs font-bold text-stone-700">{shop.name}</span>
+                                                    <span className="text-[10px] text-stone-400">{shop.note}</span>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
-
-                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                                        <div className="flex justify-between items-baseline mb-2">
-                                            <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
-                                                <Store size={14}/> Mosaic 馬賽克廣場
-                                            </span>
-                                            <span className="text-[10px] text-stone-400">10:00-22:00</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">開放式歐風商場，特色小店與海景餐廳林立，還有麵包超人博物館。</p>
-                                    </div>
                                 </div>
-                            </div>
 
-                            <hr className="border-stone-100" />
+                                {/* 🔥 補回：北野異人館 票價資訊 (完整還原版) 🔥 */}
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">北野異人館 票價資訊</h2>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
+                                    
+                                    {/* 套票區 */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-emerald-500 pl-2">超值套票 (Pass)</h4>
+                                        <div className="space-y-3">
+                                            <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                                <div className="flex justify-between items-baseline mb-1">
+                                                    <span className="font-bold text-emerald-800 text-sm">異人館巡遊尊貴通行證 (7館+展望)</span>
+                                                </div>
+                                                <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館、英國館、洋館長屋、貝恩之家</div>
+                                                <div className="flex gap-4 text-xs font-mono text-stone-800">
+                                                    <span>成人 <span className="font-bold">¥3,300</span></span>
+                                                    <span>兒童 <span className="font-bold">¥880</span></span>
+                                                </div>
+                                            </div>
 
-                            {/* 2. 必遊景點 (摩天輪 & 美利堅公園) */}
-                            <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-sky-400 pl-2">必遊景點</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
-                                        <div className="flex items-center gap-1 mb-1">
-                                            <FerrisWheel size={14} className="text-sky-600"/>
-                                            <span className="font-bold text-stone-800 text-xs">馬賽克大摩天輪</span>
-                                        </div>
-                                        <p className="text-[10px] text-stone-500 mb-1">賞神戶夜景絕佳位置</p>
-                                        <div className="text-[10px] text-stone-400 font-mono">
-                                            ¥800/人<br/>10:00-22:00
-                                        </div>
-                                    </div>
-                                    <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
-                                        <div className="flex items-center gap-1 mb-1">
-                                            <Trees size={14} className="text-sky-600"/>
-                                            <span className="font-bold text-stone-800 text-xs">美利堅公園</span>
-                                        </div>
-                                        <p className="text-[10px] text-stone-500 mb-1">BE KOBE 打卡地標</p>
-                                        <div className="text-[10px] text-stone-400">
-                                            海洋博物館<br/>面海星巴克
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                            <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                                <div className="flex justify-between items-baseline mb-1">
+                                                    <span className="font-bold text-emerald-800 text-sm">山手4館通行證 (4館+展望)</span>
+                                                </div>
+                                                <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館</div>
+                                                <div className="flex gap-4 text-xs font-mono text-stone-800">
+                                                    <span>成人 <span className="font-bold">¥2,200</span></span>
+                                                    <span>兒童 <span className="font-bold">¥550</span></span>
+                                                </div>
+                                            </div>
 
-                            <hr className="border-stone-100" />
-
-                            {/* 3. 卡通 & IP 專賣店 */}
-                            <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">卡通 & IP 專賣店</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[
-                                        {name: "麵包超人博物館", note: "1F 免費商場"},
-                                        {name: "吉卜力共和國", note: "龍貓周邊"},
-                                        {name: "史努比專賣店", note: "Snoopy Town"},
-                                        {name: "KIDDY LAND", note: "綜合IP (卡比/米菲)"},
-                                        {name: "三麗鷗神戶店", note: "Hello Kitty"},
-                                        {name: "奧特曼世界M78", note: "鹹蛋超人"},
-                                        {name: "Disney Avenue", note: "迪士尼周邊"},
-                                        {name: "拉拉熊 & 角落生物", note: "Rilakkuma Store"}
-                                    ].map((shop, i) => (
-                                        <div key={i} className="bg-pink-50/30 p-2 rounded-lg border border-pink-100 flex flex-col justify-center">
-                                            <span className="text-xs font-bold text-stone-700">{shop.name}</span>
-                                            <span className="text-[10px] text-stone-400">{shop.note}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 大阪必買伴手禮 */}
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買伴手禮</h2>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                            
-                            {/* 長崎堂 */}
-                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-orange-800 text-sm">1. 長崎堂長崎蛋糕</span>
-                                    <span className="text-[10px] text-stone-400">10:00–17:30 (二三休)</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區心齋橋筋2-1-29</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">創立100週年以上！大阪府認證的「大阪產品」，必買經典蜂蜜蛋糕。</p>
-                            </div>
-
-                            {/* 阿彌陀池大黑 */}
-                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-orange-800 text-sm">2. 阿彌陀池大黑 (難波Walk)</span>
-                                    <span className="text-[10px] text-stone-400">10:00–21:00</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區難波2-1-13</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">特色「栗米香」酥脆香甜，「岩米香」帶有生薑辛辣與黑糖甜味，口感硬脆。</p>
-                            </div>
-
-                            {/* 食倒太郎布丁 */}
-                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-orange-800 text-sm">3. 食倒太郎布丁</span>
-                                    <span className="text-[10px] text-stone-400">09:30–21:30</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區道頓堀1-8-25</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">大阪招牌人物「食倒太郎」，萌翻天的小丑帽包裝，內含甜滋滋焦糖布丁。</p>
-                            </div>
-
-                            {/* 千鳥屋宗家 */}
-                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-orange-800 text-sm">4. 千鳥屋宗家</span>
-                                    <span className="text-[10px] text-stone-400">08:30–20:00 (日休)</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">大阪市中央區本町3-4-12</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">創業395年，必買「みたらし小餅」，米香濃厚爆漿鹹甜醬汁 (保存期限僅3天)。</p>
-                            </div>
-
-                            {/* UHA味覺糖 */}
-                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-orange-800 text-sm">5. UHA味覺糖 Cororo</span>
-                                    <span className="text-[10px] text-stone-400">11:00–20:00 (週末10:00~)</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">大阪市北區角田町8−7 (阪急梅田B1F)</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">高級版Cororo，尺寸放大1.5倍，果汁含量更高。推薦巨峰葡萄、麝香葡萄口味。</p>
-                            </div>
-                        </div>
-
-                        {/* 大阪必買藥妝 & 電器 */}
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">大阪必買藥妝 & 電器</h2>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                            
-                            {/* 唐吉軻德 */}
-                            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-blue-800 text-sm">1. 驚安殿堂唐吉軻德 (道頓堀)</span>
-                                    <span className="text-[10px] text-stone-400">24H 營業</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">7-13 Souemoncho, Chuo Ward, Osaka</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">商品種類最齊全，24小時營業隨時可逛，藥妝零食電器一站購足。</p>
-                            </div>
-
-                            {/* Bic Camera */}
-                            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <span className="font-bold text-blue-800 text-sm">2. Bic Camera 難波店</span>
-                                    <span className="text-[10px] text-stone-400">10:00-22:00</span>
-                                </div>
-                                <div className="text-[10px] text-stone-500 mb-1">2 Chome-10-1 Sennichimae, Chuo Ward, Osaka</div>
-                                <p className="text-xs text-stone-600 leading-relaxed">大型電器連鎖店，各類家電、美容儀器、遊戲主機應有盡有。</p>
-                            </div>
-                        </div>
-
-                        {/* 黑門市場 專屬區塊 */}
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">黑門市場 美食攻略</h2>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                            
-                            {/* 市場基本資訊 */}
-                            <div className="flex gap-4 items-start mb-4">
-                                <div className="bg-red-50 p-3 rounded-xl shrink-0 border border-red-100">
-                                    <Store className="text-red-600" size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-lg text-stone-800">黑門市場</h3>
-                                    <p className="text-xs text-stone-500 mt-1">大阪市中央區日本橋2-4-1</p>
-                                    <div className="flex gap-2 mt-2">
-                                        <span className="bg-stone-100 text-stone-600 text-[10px] px-2 py-1 rounded">距飯店步行 5 分</span>
-                                        <span className="bg-stone-100 text-stone-600 text-[10px] px-2 py-1 rounded">08:00-17:00</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr className="border-stone-100" />
-
-                            {/* 必吃早餐 & 小吃 */}
-                            <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-orange-400 pl-2">必吃早餐 & 小吃</h4>
-                                <div className="space-y-3">
-                                    {/* 1. 高橋食品豆漿 */}
-                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-stone-800 text-sm">1. 高橋食品豆漿</span>
-                                            <span className="text-[10px] text-stone-400">09:00-16:00 (日休)</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">號稱「關西第一名豆漿」，開業99年的老字號，早餐首選。</p>
-                                    </div>
-
-                                    {/* 2. 石橋食品關東煮 */}
-                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-stone-800 text-sm">2. 石橋食品關東煮</span>
-                                            <span className="text-[10px] text-stone-400">09:00-17:00 (日休)</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">古法烹調，湯頭鮮美，關東煮超級入味。</p>
-                                    </div>
-
-                                    {/* 3. まぐろや黒銀鮪魚生魚片 */}
-                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-stone-800 text-sm">3. まぐろや黒銀鮪魚</span>
-                                            <span className="text-[10px] text-stone-400">09:00-16:00</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">必點「黑鮪魚前腹肉」，油脂豐富，入口即化。</p>
-                                    </div>
-
-                                    {/* 4. 魚福烤扇貝 */}
-                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-stone-800 text-sm">4. 魚福烤扇貝</span>
-                                            <span className="text-[10px] text-stone-400">09:30-16:00 (三休)</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">奶油烤扇貝必吃！還有北海道空運現剝海膽。</p>
-                                    </div>
-
-                                    {/* 5. 西川鮮魚店 */}
-                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-stone-800 text-sm">5. 西川鮮魚店</span>
-                                            <span className="text-[10px] text-stone-400">10:00-18:00</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">每日新鮮進貨的現剖「海膽」和「生蠔」。</p>
-                                    </div>
-
-                                    {/* 6. 三都屋草莓大福 */}
-                                    <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-stone-800 text-sm">6. 三都屋草莓大福</span>
-                                            <span className="text-[10px] text-stone-400">09:30-18:00</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">70年老店，「草莓大福」必吃，還有麝香葡萄口味與蕨餅。</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr className="border-stone-100" />
-
-                            {/* 藥妝 & 必買 */}
-                            <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">藥妝 & 必買</h4>
-                                <div className="space-y-3">
-                                    <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-pink-800 text-sm">1. OS Drug</span>
-                                            <span className="text-[10px] text-stone-400">黑門三平對面</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">價格極具競爭力！<span className="font-bold text-red-500">注意：不退稅、不刷卡 (僅收現金)</span>。</p>
-                                    </div>
-
-                                    <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-pink-800 text-sm">2. 黑門中川超市</span>
-                                            <span className="text-[10px] text-stone-400">24H 營業</span>
-                                        </div>
-                                        <p className="text-xs text-stone-600 leading-relaxed">烤鰻魚、生魚片、甜點、鮮花、在地蔬果應有盡有，深夜補貨好去處。</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 北野異人館 票價資訊 */}
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">北野異人館 票價資訊</h2>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                            
-                            {/* 套票區 */}
-                            <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-emerald-500 pl-2">超值套票 (Pass)</h4>
-                                <div className="space-y-3">
-                                    <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-emerald-800 text-sm">異人館巡遊尊貴通行證 (7館+展望)</span>
-                                        </div>
-                                        <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館、英國館、洋館長屋、貝恩之家</div>
-                                        <div className="flex gap-4 text-xs font-mono text-stone-800">
-                                            <span>成人 <span className="font-bold">¥3,300</span></span>
-                                            <span>兒童 <span className="font-bold">¥880</span></span>
+                                            <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                                <div className="flex justify-between items-baseline mb-1">
+                                                    <span className="font-bold text-emerald-800 text-sm">北野通3館通行證</span>
+                                                </div>
+                                                <div className="text-xs text-stone-600 mb-2">含：英國館、洋館長屋、貝恩之家</div>
+                                                <div className="flex gap-4 text-xs font-mono text-stone-800">
+                                                    <span>成人 <span className="font-bold">¥1,540</span></span>
+                                                    <span>兒童 <span className="font-bold">¥330</span></span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-emerald-800 text-sm">山手4館通行證 (4館+展望)</span>
-                                        </div>
-                                        <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館</div>
-                                        <div className="flex gap-4 text-xs font-mono text-stone-800">
-                                            <span>成人 <span className="font-bold">¥2,200</span></span>
-                                            <span>兒童 <span className="font-bold">¥550</span></span>
-                                        </div>
-                                    </div>
+                                    <hr className="border-stone-100" />
 
-                                    <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <span className="font-bold text-emerald-800 text-sm">北野通3館通行證</span>
-                                        </div>
-                                        <div className="text-xs text-stone-600 mb-2">含：英國館、洋館長屋、貝恩之家</div>
-                                        <div className="flex gap-4 text-xs font-mono text-stone-800">
-                                            <span>成人 <span className="font-bold">¥1,540</span></span>
-                                            <span>兒童 <span className="font-bold">¥330</span></span>
+                                    {/* 單館票價區 */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-stone-400 pl-2">單館票價</h4>
+                                        <div className="grid gap-2">
+                                            <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                                <span className="font-medium text-stone-700">魚鱗之家 & 展望台</span>
+                                                <span className="font-mono text-stone-500">成人 ¥1,100 / 兒童 ¥220</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                                <span className="font-medium text-stone-700">英國館</span>
+                                                <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                                <span className="font-medium text-stone-700">錯視藝術領事館</span>
+                                                <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
+                                                <span className="font-medium text-stone-700">其他單館 (洋館長屋等)</span>
+                                                <span className="font-mono text-stone-500">成人 ¥550 / 兒童 ¥110</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <hr className="border-stone-100" />
+                                {/* 🔥 還原：航班與住宿資訊 🔥 */}
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">航班資訊</h2>
+                                <InfoCard icon={Plane} title="去程航班" content={`${displayData.flights.outbound.time} - ${displayData.flights.outbound.arrival}`} subContent={`${displayData.flights.outbound.from} -> ${displayData.flights.outbound.to}`} image={displayData.flights.outbound.image} />
+                                <InfoCard icon={Plane} title="回程航班" content={`${displayData.flights.inbound.time} - ${displayData.flights.inbound.arrival}`} subContent={`${displayData.flights.inbound.from} -> ${displayData.flights.inbound.to}`} />
 
-                            {/* 單館票價區 */}
-                            <div>
-                                <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-stone-400 pl-2">單館票價</h4>
-                                <div className="grid gap-2">
-                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
-                                        <span className="font-medium text-stone-700">魚鱗之家 & 展望台</span>
-                                        <span className="font-mono text-stone-500">成人 ¥1,100 / 兒童 ¥220</span>
+                                <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 mt-8 ml-1">住宿資訊</h2>
+                                {displayData.hotels.map((hotel, i) => (
+                                    <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4 overflow-hidden">
+                                        {hotel.image && (
+                                            <div className="h-48 -mx-5 -mt-5 mb-4 overflow-hidden relative">
+                                                <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2 items-center mb-2">
+                                            <div className="bg-indigo-50 text-indigo-600 p-2 rounded-lg"><BedDouble size={20}/></div>
+                                            <div>
+                                                <div className="text-xs text-stone-400">{hotel.period}</div>
+                                                <h3 className="font-bold text-stone-800">{hotel.name}</h3>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm text-stone-600 mb-3">{hotel.address}</div>
+                                        <div className="flex gap-2 mb-3">
+                                            <span className="text-xs bg-stone-100 px-2 py-1 rounded text-stone-500">In: {hotel.checkIn}</span>
+                                            <span className="text-xs bg-stone-100 px-2 py-1 rounded text-stone-500">Out: {hotel.checkOut}</span>
+                                        </div>
+                                        <div className="text-xs text-stone-500 bg-stone-50 p-2 rounded border border-stone-100">
+                                            <span className="font-bold">Note:</span> {hotel.note}
+                                        </div>
+                                        <div className="mt-3 flex justify-end">
+                                            <NavButton address={hotel.address} />
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
-                                        <span className="font-medium text-stone-700">英國館</span>
-                                        <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
-                                        <span className="font-medium text-stone-700">錯視藝術領事館</span>
-                                        <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
-                                        <span className="font-medium text-stone-700">其他單館 (洋館長屋等)</span>
-                                        <span className="font-mono text-stone-500">成人 ¥550 / 兒童 ¥110</span>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
-                        </div>
+                        )}
+                    </main>
 
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">航班資訊</h2>
-                        <InfoCard icon={Plane} title="去程航班" content={`${TRIP_DATA.flights.outbound.time} - ${TRIP_DATA.flights.outbound.arrival}`} subContent={`${TRIP_DATA.flights.outbound.from} -> ${TRIP_DATA.flights.outbound.to}`} image={TRIP_DATA.flights.outbound.image} />
-                        <InfoCard icon={Plane} title="回程航班" content={`${TRIP_DATA.flights.inbound.time} - ${TRIP_DATA.flights.inbound.arrival}`} subContent={`${TRIP_DATA.flights.inbound.from} -> ${TRIP_DATA.flights.inbound.to}`} />
-
-                        <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 mt-8 ml-1">住宿資訊</h2>
-                        {TRIP_DATA.hotels.map((hotel, i) => (
-                        <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-4 overflow-hidden">
-                            {hotel.image && (
-                                <div className="h-48 -mx-5 -mt-5 mb-4 overflow-hidden relative">
-                                    <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
-                                </div>
-                            )}
-                            <div className="flex gap-2 items-center mb-2">
-                            <div className="bg-indigo-50 text-indigo-600 p-2 rounded-lg"><BedDouble size={20}/></div>
-                            <div>
-                                <div className="text-xs text-stone-400">{hotel.period}</div>
-                                <h3 className="font-bold text-stone-800">{hotel.name}</h3>
-                            </div>
-                            </div>
-                            <div className="text-sm text-stone-600 mb-3">{hotel.address}</div>
-                            <div className="flex gap-2 mb-3">
-                            <span className="text-xs bg-stone-100 px-2 py-1 rounded text-stone-500">In: {hotel.checkIn}</span>
-                            <span className="text-xs bg-stone-100 px-2 py-1 rounded text-stone-500">Out: {hotel.checkOut}</span>
-                            </div>
-                            <div className="text-xs text-stone-500 bg-stone-50 p-2 rounded border border-stone-100">
-                            <span className="font-bold">Note:</span> {hotel.note}
-                            </div>
-                            <div className="mt-3 flex justify-end">
-                            <NavButton address={hotel.address} />
-                            </div>
-                        </div>
-                        ))}
-                    </div>
-                    )}
-
-                </main>
-
-                {/* Bottom Nav */}
-                <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md border border-stone-200 shadow-2xl rounded-full px-6 py-3 flex gap-8 items-center z-50">
-                    <button 
-                    onClick={() => setActiveTab('itinerary')}
-                    className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'itinerary' ? 'text-stone-800' : 'text-stone-400'}`}
-                    >
-                    <Calendar size={20} strokeWidth={activeTab === 'itinerary' ? 2.5 : 2} />
-                    <span className="text-[10px] font-medium">行程</span>
-                    </button>
-                    
-                    <button 
-                    onClick={() => setActiveTab('info')}
-                    className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'info' ? 'text-stone-800' : 'text-stone-400'}`}
-                    >
-                    <Info size={20} strokeWidth={activeTab === 'info' ? 2.5 : 2} />
-                    <span className="text-[10px] font-medium">資訊</span>
-                    </button>
-                </nav>
+                    {/* Bottom Nav */}
+                    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md border border-stone-200 shadow-2xl rounded-full px-6 py-3 flex gap-8 items-center z-50">
+                        <button onClick={() => setActiveTab('itinerary')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'itinerary' ? 'text-stone-800' : 'text-stone-400'}`}>
+                            <Calendar size={20} strokeWidth={activeTab === 'itinerary' ? 2.5 : 2} /><span className="text-[10px] font-medium">行程</span>
+                        </button>
+                        <button onClick={() => setActiveTab('accounting')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'accounting' ? 'text-stone-800' : 'text-stone-400'}`}>
+                            <Wallet size={20} strokeWidth={activeTab === 'accounting' ? 2.5 : 2} /><span className="text-[10px] font-medium">記帳</span>
+                        </button>
+                        <button onClick={() => setActiveTab('info')} className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'info' ? 'text-stone-800' : 'text-stone-400'}`}>
+                            <Info size={20} strokeWidth={activeTab === 'info' ? 2.5 : 2} /><span className="text-[10px] font-medium">資訊</span>
+                        </button>
+                    </nav>
                 </div>
             );
         }
