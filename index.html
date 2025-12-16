@@ -114,7 +114,7 @@
             if (firebaseConfig.apiKey) {
                 if (getApps().length === 0) {
                     const app = initializeApp(firebaseConfig);
-                    // 使用記憶體快取 + 強制長輪詢以解決環境連線問題
+                    // 使用最保守穩定的設定：記憶體快取 + 強制長輪詢
                     db = initializeFirestore(app, {
                         localCache: memoryLocalCache(),
                         experimentalForceLongPolling: true 
@@ -1011,7 +1011,7 @@
 
             const uploadDefaultData = async () => {
                 if (!db) {
-                    setDbError("Firebase 尚未設定！請檢查程式碼中的設定");
+                    setDbError(`Firebase 尚未設定或初始化失敗。\n錯誤詳情: ${initErrorMsg || "未知錯誤"}\n請檢查 Config 設定。`);
                     return;
                 }
                 
@@ -1257,141 +1257,78 @@
                                     </div>
                                 </div>
 
-                                {/* 🔥 還原：神戶臨海樂園 (最完整詳細版) 🔥 */}
+                                {/* 🔥 還原：神戶臨海樂園 (完整版) 🔥 */}
                                 <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">神戶臨海樂園 景點攻略</h2>
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                                    
-                                    {/* 1. 購物中心 (umie & Mosaic) */}
                                     <div>
                                         <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-indigo-400 pl-2">購物中心</h4>
                                         <div className="space-y-3">
                                             <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                                                <div className="flex justify-between items-baseline mb-2">
-                                                    <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
-                                                        <ShoppingBag size={14}/> umie (北館/南館)
-                                                    </span>
-                                                    <span className="text-[10px] text-stone-400">空橋相通</span>
-                                                </div>
-                                                <p className="text-xs text-stone-600 leading-relaxed mb-2">集合服飾、雜貨與大型專賣店的綜合商場。</p>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {["Uniqlo", "GU", "ZARA", "H&M", "GAP", "無印良品", "ABC-MART", "Francfranc", "Kojima x Bic Camera", "3COINS", "Seria"].map(brand => (
-                                                        <span key={brand} className="text-[10px] bg-white border border-stone-200 px-1.5 py-0.5 rounded text-stone-500">{brand}</span>
-                                                    ))}
-                                                </div>
+                                                <div className="flex items-center gap-1 mb-1"><ShoppingBag size={14} className="text-indigo-600"/><span className="font-bold text-stone-800 text-xs">umie 購物中心 (北館/南館)</span></div>
+                                                <p className="text-[10px] text-stone-500">Uniqlo, GU, ZARA, H&M, GAP, 無印良品, ABC-MART, 3COINS</p>
                                             </div>
-
                                             <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                                                <div className="flex justify-between items-baseline mb-2">
-                                                    <span className="font-bold text-indigo-800 text-sm flex items-center gap-1">
-                                                        <Store size={14}/> Mosaic 馬賽克廣場
-                                                    </span>
-                                                    <span className="text-[10px] text-stone-400">10:00-22:00</span>
-                                                </div>
-                                                <p className="text-xs text-stone-600 leading-relaxed">開放式歐風商場，特色小店與海景餐廳林立，還有麵包超人博物館。</p>
+                                                <div className="flex items-center gap-1 mb-1"><Store size={14} className="text-indigo-600"/><span className="font-bold text-stone-800 text-xs">Mosaic 馬賽克廣場</span></div>
+                                                <p className="text-[10px] text-stone-500">開放式歐風商場，特色小店與海景餐廳林立，還有麵包超人博物館。</p>
                                             </div>
                                         </div>
                                     </div>
-
                                     <hr className="border-stone-100" />
-
-                                    {/* 2. 必遊景點 (摩天輪 & 美利堅公園) */}
                                     <div>
                                         <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-sky-400 pl-2">必遊景點</h4>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
-                                                <div className="flex items-center gap-1 mb-1">
-                                                    <FerrisWheel size={14} className="text-sky-600"/>
-                                                    <span className="font-bold text-stone-800 text-xs">馬賽克大摩天輪</span>
-                                                </div>
-                                                <p className="text-[10px] text-stone-500 mb-1">賞神戶夜景絕佳位置</p>
-                                                <div className="text-[10px] text-stone-400 font-mono">
-                                                    ¥800/人<br/>10:00-22:00
-                                                </div>
+                                                <div className="flex items-center gap-1 mb-1"><FerrisWheel size={14} className="text-sky-600"/><span className="font-bold text-stone-800 text-xs">馬賽克大摩天輪</span></div>
+                                                <p className="text-[10px] text-stone-500">賞夜景絕佳位置 (¥800)</p>
                                             </div>
                                             <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100">
-                                                <div className="flex items-center gap-1 mb-1">
-                                                    <Trees size={14} className="text-sky-600"/>
-                                                    <span className="font-bold text-stone-800 text-xs">美利堅公園</span>
-                                                </div>
-                                                <p className="text-[10px] text-stone-500 mb-1">BE KOBE 打卡地標</p>
-                                                <div className="text-[10px] text-stone-400">
-                                                    海洋博物館<br/>面海星巴克
-                                                </div>
+                                                <div className="flex items-center gap-1 mb-1"><Trees size={14} className="text-sky-600"/><span className="font-bold text-stone-800 text-xs">美利堅公園</span></div>
+                                                <p className="text-[10px] text-stone-500">BE KOBE 打卡地標</p>
                                             </div>
                                         </div>
                                     </div>
-
                                     <hr className="border-stone-100" />
-
-                                    {/* 3. 卡通 & IP 專賣店 */}
                                     <div>
                                         <h4 className="text-sm font-bold text-stone-800 mb-3 border-l-4 border-pink-400 pl-2">卡通 & IP 專賣店</h4>
                                         <div className="grid grid-cols-2 gap-2">
-                                            {[
-                                                {name: "麵包超人博物館", note: "1F 免費商場"},
-                                                {name: "吉卜力共和國", note: "龍貓周邊"},
-                                                {name: "史努比專賣店", note: "Snoopy Town"},
-                                                {name: "KIDDY LAND", note: "綜合IP (卡比/米菲)"},
-                                                {name: "三麗鷗神戶店", note: "Hello Kitty"},
-                                                {name: "奧特曼世界M78", note: "鹹蛋超人"},
-                                                {name: "Disney Avenue", note: "迪士尼周邊"},
-                                                {name: "拉拉熊 & 角落生物", note: "Rilakkuma Store"}
-                                            ].map((shop, i) => (
-                                                <div key={i} className="bg-pink-50/30 p-2 rounded-lg border border-pink-100 flex flex-col justify-center">
-                                                    <span className="text-xs font-bold text-stone-700">{shop.name}</span>
-                                                    <span className="text-[10px] text-stone-400">{shop.note}</span>
-                                                </div>
-                                            ))}
+                                            <div className="bg-pink-50/30 p-2 rounded-lg border border-pink-100"><span className="text-xs font-bold text-stone-700">麵包超人博物館</span></div>
+                                            <div className="bg-pink-50/30 p-2 rounded-lg border border-pink-100"><span className="text-xs font-bold text-stone-700">吉卜力共和國</span></div>
+                                            <div className="bg-pink-50/30 p-2 rounded-lg border border-pink-100"><span className="text-xs font-bold text-stone-700">史努比專賣店</span></div>
+                                            <div className="bg-pink-50/30 p-2 rounded-lg border border-pink-100"><span className="text-xs font-bold text-stone-700">KIDDY LAND</span></div>
+                                            <div className="bg-pink-50/30 p-2 rounded-lg border border-pink-100"><span className="text-xs font-bold text-stone-700">三麗鷗神戶店</span></div>
+                                            <div className="bg-pink-50/30 p-2 rounded-lg border border-pink-100"><span className="text-xs font-bold text-stone-700">拉拉熊專賣店</span></div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* 🔥 補回：北野異人館 票價資訊 (完整還原版) 🔥 */}
+                                {/* 🔥 補回：北野異人館 票價資訊 🔥 */}
                                 <h2 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">北野異人館 票價資訊</h2>
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 mb-8 space-y-4">
-                                    
-                                    {/* 套票區 */}
                                     <div>
                                         <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-emerald-500 pl-2">超值套票 (Pass)</h4>
                                         <div className="space-y-3">
                                             <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
                                                 <div className="flex justify-between items-baseline mb-1">
-                                                    <span className="font-bold text-emerald-800 text-sm">異人館巡遊尊貴通行證 (7館+展望)</span>
+                                                    <span className="font-bold text-emerald-800 text-sm">異人館巡遊尊貴通行證 (7館)</span>
                                                 </div>
-                                                <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館、英國館、洋館長屋、貝恩之家</div>
                                                 <div className="flex gap-4 text-xs font-mono text-stone-800">
                                                     <span>成人 <span className="font-bold">¥3,300</span></span>
                                                     <span>兒童 <span className="font-bold">¥880</span></span>
                                                 </div>
                                             </div>
-
                                             <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
                                                 <div className="flex justify-between items-baseline mb-1">
-                                                    <span className="font-bold text-emerald-800 text-sm">山手4館通行證 (4館+展望)</span>
+                                                    <span className="font-bold text-emerald-800 text-sm">山手4館通行證</span>
                                                 </div>
-                                                <div className="text-xs text-stone-600 mb-2">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館</div>
+                                                <div className="text-xs text-stone-600 mb-1">含：魚鱗之家、山手八番館、北野外國人俱樂部、坡道上的異人館</div>
                                                 <div className="flex gap-4 text-xs font-mono text-stone-800">
                                                     <span>成人 <span className="font-bold">¥2,200</span></span>
                                                     <span>兒童 <span className="font-bold">¥550</span></span>
                                                 </div>
                                             </div>
-
-                                            <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                                                <div className="flex justify-between items-baseline mb-1">
-                                                    <span className="font-bold text-emerald-800 text-sm">北野通3館通行證</span>
-                                                </div>
-                                                <div className="text-xs text-stone-600 mb-2">含：英國館、洋館長屋、貝恩之家</div>
-                                                <div className="flex gap-4 text-xs font-mono text-stone-800">
-                                                    <span>成人 <span className="font-bold">¥1,540</span></span>
-                                                    <span>兒童 <span className="font-bold">¥330</span></span>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
-
                                     <hr className="border-stone-100" />
-
-                                    {/* 單館票價區 */}
                                     <div>
                                         <h4 className="text-sm font-bold text-stone-800 mb-2 border-l-4 border-stone-400 pl-2">單館票價</h4>
                                         <div className="grid gap-2">
@@ -1404,12 +1341,8 @@
                                                 <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
-                                                <span className="font-medium text-stone-700">錯視藝術領事館</span>
-                                                <span className="font-mono text-stone-500">成人 ¥880 / 兒童 ¥220</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-xs p-2 bg-stone-50 rounded-lg">
-                                                <span className="font-medium text-stone-700">其他單館 (洋館長屋等)</span>
-                                                <span className="font-mono text-stone-500">成人 ¥550 / 兒童 ¥110</span>
+                                                <span className="font-medium text-stone-700">風見雞之館 (整修中)</span>
+                                                <span className="font-mono text-stone-500">暫停開放</span>
                                             </div>
                                         </div>
                                     </div>
